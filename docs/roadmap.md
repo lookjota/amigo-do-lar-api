@@ -27,9 +27,14 @@ refinado conforme requisitos funcionais e operacionais forem validados.
 
 ## M4 Services
 
-- Implementar o catálogo de serviços.
-- Definir disponibilidade e regras de ativação.
-- Relacionar serviços às áreas atendidas.
+Status: concluído.
+
+- Catálogo público com paginação, busca, categoria e ordenação.
+- Consulta de serviço por slug com visibilidade baseada em autenticação.
+- Criação e atualização restritas a administradores.
+- Disponibilidade controlada por ativação e desativação lógica.
+- Relação entre serviços e áreas atendidas permanece para um marco futuro,
+  quando seus requisitos forem definidos.
 
 ## M5 Customers
 
