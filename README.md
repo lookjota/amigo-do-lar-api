@@ -85,6 +85,47 @@ npm run build
 npm run start
 ```
 
+## Respostas de erro
+
+A API converte erros em um único formato. O `requestId` permite correlacionar a
+resposta com os logs da requisição:
+
+```json
+{
+  "error": {
+    "code": "RESOURCE_NOT_FOUND",
+    "message": "Resource not found",
+    "statusCode": 404,
+    "details": [],
+    "requestId": "req-1"
+  }
+}
+```
+
+`details` contém informações seguras e estruturadas quando aplicável, como os
+campos inválidos de uma requisição. Stack traces, mensagens internas do banco e
+outros detalhes de infraestrutura nunca são enviados ao cliente.
+
+### Códigos iniciais
+
+| Código | Status | Uso |
+| --- | ---: | --- |
+| `BAD_REQUEST` | 400 | Requisição inválida |
+| `VALIDATION_ERROR` | 400 | Falha de validação Fastify ou Zod |
+| `UNAUTHORIZED` | 401 | Credenciais ausentes ou inválidas |
+| `FORBIDDEN` | 403 | Operação não permitida |
+| `RESOURCE_NOT_FOUND` | 404 | Recurso ou rota não encontrado |
+| `CONFLICT` | 409 | Conflito genérico de estado |
+| `RESOURCE_CONFLICT` | 409 | Conflito de unicidade identificado pelo Prisma |
+| `UNPROCESSABLE_ENTITY` | 422 | Requisição válida que não pode ser processada |
+| `INTERNAL_SERVER_ERROR` | 500 | Falha interna inesperada |
+
+Erros operacionais representam situações esperadas e seguras para apresentação,
+como recurso inexistente, conflito e entrada inválida. Eles preservam o status e
+o código definidos pela aplicação e são registrados como aviso. Erros
+inesperados são registrados como erro com o logger do Fastify e produzem sempre
+uma resposta genérica `INTERNAL_SERVER_ERROR`, sem expor a causa interna.
+
 ## Status
 
 Os marcos de fundação HTTP e banco de dados estão implementados. Endpoints de
