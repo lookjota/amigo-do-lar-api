@@ -9,17 +9,26 @@ import {
   PrismaAuthRepository,
 } from './modules/auth/auth.repository.js';
 import { registerAuthRoutes } from './modules/auth/auth.routes.js';
+import {
+  PrismaServiceRepository,
+  type ServiceRepository,
+} from './modules/services/services.repository.js';
+import { registerServicesRoutes } from './modules/services/services.routes.js';
 import { registerJwt } from './shared/auth/jwt.js';
 import { registerDatabaseLifecycle } from './shared/database/index.js';
 import { registerErrorHandlers } from './shared/errors/error-handler.js';
 
 interface BuildAppOptions extends FastifyServerOptions {
   authRepository?: AuthRepository;
+  serviceRepository?: ServiceRepository;
 }
 
 export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
-  const { authRepository = new PrismaAuthRepository(), ...serverOptions } =
-    options;
+  const {
+    authRepository = new PrismaAuthRepository(),
+    serviceRepository = new PrismaServiceRepository(),
+    ...serverOptions
+  } = options;
   const app = fastify({
     logger: {
       level: env.LOG_LEVEL,
@@ -31,6 +40,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   registerDatabaseLifecycle(app);
   registerErrorHandlers(app);
   registerAuthRoutes(app, authRepository);
+  registerServicesRoutes(app, serviceRepository);
 
   app.get('/health', () => {
     return {

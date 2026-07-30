@@ -192,11 +192,21 @@ o código definidos pela aplicação e são registrados como aviso. Erros
 inesperados são registrados como erro com o logger do Fastify e produzem sempre
 uma resposta genérica `INTERNAL_SERVER_ERROR`, sem expor a causa interna.
 
+## Catálogo de serviços
+
+O módulo de serviços disponibiliza listagem e consulta pública, com paginação,
+busca, filtro por categoria e ordenação. Serviços inativos ficam ocultos
+publicamente. Criação, atualização e desativação lógica exigem JWT e papel
+`ADMIN`; usuários autenticados também podem consultar registros inativos.
+
+A referência completa, incluindo parâmetros, autorização e exemplos de request
+e response, está em [docs/services.md](docs/services.md).
+
 ## Status
 
-Os marcos de fundação HTTP, banco de dados e autenticação administrativa estão
-implementados. Endpoints e regras dos demais módulos serão adicionados nos
-próximos marcos.
+Os marcos de fundação HTTP, banco de dados, autenticação administrativa e
+catálogo de serviços estão implementados. Endpoints e regras dos demais módulos
+serão adicionados nos próximos marcos.
 
 ## Roadmap resumido
 
