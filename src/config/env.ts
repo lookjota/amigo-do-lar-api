@@ -13,6 +13,11 @@ const envSchema = z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),
     DATABASE_URL: z.url().optional(),
+    JWT_SECRET: z.string().min(32),
+    JWT_EXPIRES_IN: z.coerce.number().int().positive(),
+    ADMIN_EMAIL: z.email(),
+    ADMIN_PASSWORD: z.string().min(12),
+    ADMIN_NAME: z.string().trim().min(1),
   })
   .superRefine((value, context) => {
     if (value.NODE_ENV !== 'test' && value.DATABASE_URL === undefined) {

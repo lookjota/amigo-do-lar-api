@@ -48,10 +48,10 @@ cp .env.example .env
 docker compose up -d postgres
 ```
 
-Antes de executar o seed, preencha `SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL` e
-`SEED_ADMIN_PASSWORD_HASH` no arquivo `.env`. O hash deve ser gerado fora do
-repositório com o algoritmo que será adotado pelo módulo de autenticação; não
-grave a senha em texto puro.
+Antes de executar o seed, preencha `ADMIN_NAME`, `ADMIN_EMAIL` e
+`ADMIN_PASSWORD` no arquivo `.env`. O seed gera um hash Argon2id e persiste
+somente esse hash. A senha em texto puro existe apenas no ambiente do processo e
+nunca deve ser versionada.
 
 Prepare o banco e inicie a API:
 
@@ -120,6 +120,72 @@ outros detalhes de infraestrutura nunca são enviados ao cliente.
 | `UNPROCESSABLE_ENTITY` | 422 | Requisição válida que não pode ser processada |
 | `INTERNAL_SERVER_ERROR` | 500 | Falha interna inesperada |
 
+## Autenticação administrativa
+
+### Login
+
+`POST /auth/login`
+
+```json
+{
+  "email": "admin@example.com",
+  "password": "secure-password"
+}
+```
+
+Uma autenticação válida retorna um access token JWT, seu tempo de vida em
+segundos e os dados públicos do usuário:
+
+```json
+{
+  "accessToken": "<token>",
+  "tokenType": "Bearer",
+  "expiresIn": 900,
+  "user": {
+    "id": "b32efc7d-bb72-4d0b-a64b-b34f4fc83bad",
+    "name": "Administrator",
+    "email": "admin@example.com",
+    "role": "ADMIN"
+  }
+}
+```
+
+Credenciais inválidas e contas inativas recebem sempre `401` com o código
+`INVALID_CREDENTIALS`, sem indicar se o email está cadastrado.
+
+### Usuário autenticado
+
+`GET /auth/me`
+
+Envie o token no header:
+
+```http
+Authorization: Bearer <access-token>
+```
+
+A resposta contém apenas `id`, `name`, `email` e `role`. Senha e
+`passwordHash` nunca são retornados.
+
+### Variáveis de ambiente
+
+- `JWT_SECRET`: segredo de assinatura com no mínimo 32 caracteres, sem valor
+  padrão.
+- `JWT_EXPIRES_IN`: duração positiva do access token, em segundos.
+- `ADMIN_NAME`: nome usado pelo seed idempotente.
+- `ADMIN_EMAIL`: email válido usado pelo seed.
+- `ADMIN_PASSWORD`: senha com no mínimo 12 caracteres usada pelo seed para
+  produzir o hash Argon2id.
+
+O JWT contém somente `sub` (identificador do usuário), `role`, `iat` e `exp`.
+Email não é incluído porque `/auth/me` consulta a fonte atual. As rotas
+protegidas validam assinatura e expiração; a consulta do usuário também confirma
+que a conta continua ativa. Senhas, hashes e tokens não devem ser registrados
+em logs.
+
+Este marco implementa somente access tokens. Refresh token, recuperação de senha
+e cadastro público não fazem parte desta etapa; refresh token poderá ser
+adicionado posteriormente se houver necessidade.
+
 Erros operacionais representam situações esperadas e seguras para apresentação,
 como recurso inexistente, conflito e entrada inválida. Eles preservam o status e
 o código definidos pela aplicação e são registrados como aviso. Erros
@@ -128,8 +194,9 @@ uma resposta genérica `INTERNAL_SERVER_ERROR`, sem expor a causa interna.
 
 ## Status
 
-Os marcos de fundação HTTP e banco de dados estão implementados. Endpoints de
-negócio, autenticação e regras dos módulos serão adicionados nos próximos marcos.
+Os marcos de fundação HTTP, banco de dados e autenticação administrativa estão
+implementados. Endpoints e regras dos demais módulos serão adicionados nos
+próximos marcos.
 
 ## Roadmap resumido
 

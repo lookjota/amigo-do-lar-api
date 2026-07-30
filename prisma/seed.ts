@@ -1,12 +1,13 @@
 import 'dotenv/config';
 
 import { PrismaClient, UserRole } from '@prisma/client';
+import argon2 from 'argon2';
 import { z } from 'zod';
 
 const seedEnvSchema = z.object({
-  SEED_ADMIN_NAME: z.string().min(1),
-  SEED_ADMIN_EMAIL: z.email(),
-  SEED_ADMIN_PASSWORD_HASH: z.string().min(1),
+  ADMIN_NAME: z.string().trim().min(1),
+  ADMIN_EMAIL: z.email(),
+  ADMIN_PASSWORD: z.string().min(12),
 });
 
 const seedEnv = seedEnvSchema.parse(process.env);
@@ -69,18 +70,22 @@ const serviceAreas = [
 ] as const;
 
 async function seed(): Promise<void> {
+  const passwordHash = await argon2.hash(seedEnv.ADMIN_PASSWORD, {
+    type: argon2.argon2id,
+  });
+
   await prisma.user.upsert({
-    where: { email: seedEnv.SEED_ADMIN_EMAIL },
+    where: { email: seedEnv.ADMIN_EMAIL },
     update: {
-      name: seedEnv.SEED_ADMIN_NAME,
-      passwordHash: seedEnv.SEED_ADMIN_PASSWORD_HASH,
+      name: seedEnv.ADMIN_NAME,
+      passwordHash,
       role: UserRole.ADMIN,
       isActive: true,
     },
     create: {
-      name: seedEnv.SEED_ADMIN_NAME,
-      email: seedEnv.SEED_ADMIN_EMAIL,
-      passwordHash: seedEnv.SEED_ADMIN_PASSWORD_HASH,
+      name: seedEnv.ADMIN_NAME,
+      email: seedEnv.ADMIN_EMAIL,
+      passwordHash,
       role: UserRole.ADMIN,
     },
   });
