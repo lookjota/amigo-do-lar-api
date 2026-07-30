@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  OPERATOR
+}
+
+enum ServiceRequestStatus {
+  PENDING
+  CONTACTED
+  QUOTED
+  APPROVED
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole
+  isActive     Boolean  @default(true) @map("is_active")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive])
+  @@map("users")
+}
+
+model Customer {
+  id              String           @id @default(uuid()) @db.Uuid
+  name            String
+  phone           String
+  email           String?
+  serviceRequests ServiceRequest[]
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  @@index([phone])
+  @@index([email])
+  @@map("customers")
+}
+
+model Service {
+  id              String           @id @default(uuid()) @db.Uuid
+  name            String
+  slug            String           @unique
+  description     String
+  category        String
+  isActive        Boolean          @default(true) @map("is_active")
+  serviceRequests ServiceRequest[]
+  createdAt       DateTime         @default(now()) @map("created_at")
+  updatedAt       DateTime         @updatedAt @map("updated_at")
+
+  @@index([isActive])
+  @@map("services")
+}
+
+model ServiceRequest {
+  id            String               @id @default(uuid()) @db.Uuid
+  customerId    String               @map("customer_id") @db.Uuid
+  serviceId     String               @map("service_id") @db.Uuid
+  description   String
+  status        ServiceRequestStatus @default(PENDING)
+  preferredDate DateTime?            @map("preferred_date")
+  customer      Customer             @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  service       Service              @relation(fields: [serviceId], references: [id], onDelete: Restrict)
+  appointment   Appointment?
+  createdAt     DateTime             @default(now()) @map("created_at")
+  updatedAt     DateTime             @updatedAt @map("updated_at")
+
+  @@index([customerId])
+  @@index([serviceId])
+  @@index([status])
+  @@index([preferredDate])
+  @@map("service_requests")
+}
+
+model Appointment {
+  id               String            @id @default(uuid()) @db.Uuid
+  serviceRequestId String            @unique @map("service_request_id") @db.Uuid
+  scheduledAt      DateTime          @map("scheduled_at")
+  status           AppointmentStatus @default(SCHEDULED)
+  notes            String?
+  serviceRequest   ServiceRequest    @relation(fields: [serviceRequestId], references: [id], onDelete: Restrict)
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([scheduledAt])
+  @@map("appointments")
+}
+
+model ServiceArea {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String
+  slug      String   @unique
+  isActive  Boolean  @default(true) @map("is_active")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@index([isActive])
+  @@map("service_areas")
+}

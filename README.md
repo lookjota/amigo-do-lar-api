@@ -39,25 +39,56 @@ Prisma diretamente.
 Consulte [docs/architecture.md](docs/architecture.md) para as regras de
 dependência e responsabilidades das camadas.
 
-## Comandos futuros
+## Desenvolvimento local
 
-Os comandos abaixo representam a interface planejada para o projeto e ainda não
-estão disponíveis nesta etapa:
+Copie as variáveis de ambiente e inicie o PostgreSQL:
 
 ```bash
+cp .env.example .env
+docker compose up -d postgres
+```
+
+Antes de executar o seed, preencha `SEED_ADMIN_NAME`, `SEED_ADMIN_EMAIL` e
+`SEED_ADMIN_PASSWORD_HASH` no arquivo `.env`. O hash deve ser gerado fora do
+repositório com o algoritmo que será adotado pelo módulo de autenticação; não
+grave a senha em texto puro.
+
+Prepare o banco e inicie a API:
+
+```bash
+npm run db:generate
+npm run db:migrate
+npm run db:seed
 npm run dev
+```
+
+### Comandos do banco
+
+- `npm run db:generate`: gera o Prisma Client após mudanças no schema.
+- `npm run db:migrate -- --name <nome>`: cria e aplica uma migration em
+  desenvolvimento.
+- `npm run db:migrate:deploy`: aplica migrations já versionadas em outros
+  ambientes.
+- `npm run db:seed`: insere os dados iniciais de forma idempotente.
+- `npm run db:studio`: abre a interface local de inspeção do Prisma.
+
+Para interromper o banco local, execute `docker compose down`. Os dados ficam no
+volume `postgres_data`; `docker compose down -v` também remove esse volume.
+
+### Qualidade e execução
+
+```bash
 npm run lint
 npm run typecheck
 npm run test
-npm run test:integration
 npm run build
 npm run start
 ```
 
 ## Status
 
-O projeto está em sua fase inicial de documentação e definição arquitetural.
-Node.js ainda não foi inicializado e nenhuma dependência foi instalada.
+Os marcos de fundação HTTP e banco de dados estão implementados. Endpoints de
+negócio, autenticação e regras dos módulos serão adicionados nos próximos marcos.
 
 ## Roadmap resumido
 
