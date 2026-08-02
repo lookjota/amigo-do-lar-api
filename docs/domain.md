@@ -16,7 +16,10 @@ Contém as informações essenciais de acesso, estado da conta e autorização.
 Representa a pessoa ou organização que solicita um serviço. Mantém os dados de
 contato e demais informações necessárias para o atendimento. Um `Customer` pode
 estar associado a um `User`, sem que essa associação seja obrigatoriamente
-presumida nesta fase.
+presumida nesta fase. Possui nome normalizado, telefone brasileiro normalizado e
+único, email opcional normalizado e único quando informado, além de estado ativo.
+A remoção é lógica por `isActive=false`; registros inativos permanecem
+disponíveis para consultas administrativas e histórico.
 
 ### Service
 

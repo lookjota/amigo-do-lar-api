@@ -48,14 +48,17 @@ model User {
 model Customer {
   id              String           @id @default(uuid()) @db.Uuid
   name            String
-  phone           String
-  email           String?
+  phone           String           @unique
+  email           String?          @unique
+  isActive        Boolean          @default(true) @map("is_active")
   serviceRequests ServiceRequest[]
   createdAt       DateTime         @default(now()) @map("created_at")
   updatedAt       DateTime         @updatedAt @map("updated_at")
 
-  @@index([phone])
-  @@index([email])
+  @@index([name])
+  @@index([isActive])
+  @@index([createdAt])
+  @@index([updatedAt])
   @@map("customers")
 }
 

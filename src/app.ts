@@ -10,6 +10,11 @@ import {
 } from './modules/auth/auth.repository.js';
 import { registerAuthRoutes } from './modules/auth/auth.routes.js';
 import {
+  type CustomerRepository,
+  PrismaCustomerRepository,
+} from './modules/customers/customers.repository.js';
+import { registerCustomersRoutes } from './modules/customers/customers.routes.js';
+import {
   PrismaServiceRepository,
   type ServiceRepository,
 } from './modules/services/services.repository.js';
@@ -20,12 +25,14 @@ import { registerErrorHandlers } from './shared/errors/error-handler.js';
 
 interface BuildAppOptions extends FastifyServerOptions {
   authRepository?: AuthRepository;
+  customerRepository?: CustomerRepository;
   serviceRepository?: ServiceRepository;
 }
 
 export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   const {
     authRepository = new PrismaAuthRepository(),
+    customerRepository = new PrismaCustomerRepository(),
     serviceRepository = new PrismaServiceRepository(),
     ...serverOptions
   } = options;
@@ -41,6 +48,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   registerErrorHandlers(app);
   registerAuthRoutes(app, authRepository);
   registerServicesRoutes(app, serviceRepository);
+  registerCustomersRoutes(app, customerRepository);
 
   app.get('/health', () => {
     return {
