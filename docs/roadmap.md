@@ -58,9 +58,11 @@ Status: concluído no marco de entrega solicitado como M7.
 
 ## M7 Appointments
 
-- Implementar agendamento e reagendamento.
-- Validar disponibilidade e conflitos de horário.
-- Relacionar agendamentos às solicitações.
+Status: concluído no marco de entrega solicitado como M8.
+
+- Agendamento, reagendamento e cancelamento com histórico preservado.
+- Disponibilidade por intervalos em uma agenda operacional única.
+- Máquina de estados e sincronização transacional com solicitações.
 
 ## M8 Security and Observability
 

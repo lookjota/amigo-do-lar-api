@@ -2,8 +2,8 @@
 
 O módulo registra a intenção comercial de um cliente, relaciona-a a um serviço do
 catálogo e permite que a equipe acompanhe o atendimento até sua conclusão ou
-cancelamento. Ele não cria agendamentos; `SCHEDULED` representa apenas o estágio
-operacional até o módulo de Appointments ser implementado.
+cancelamento. O módulo de Appointments agora é responsável por levar uma
+solicitação `APPROVED` a `SCHEDULED` e sincronizar as etapas operacionais.
 
 ## Dados persistidos
 
@@ -158,5 +158,4 @@ incompatíveis são definidos como `null` em toda transição válida.
 - idempotência forte por `Idempotency-Key`;
 - motivo estruturado de cancelamento e histórico de transições;
 - integração com Service Areas e validação de CEP;
-- criação do Appointment a partir da etapa de agendamento;
 - auditoria das alterações administrativas.

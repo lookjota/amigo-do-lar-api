@@ -10,6 +10,11 @@ import {
 } from './modules/auth/auth.repository.js';
 import { registerAuthRoutes } from './modules/auth/auth.routes.js';
 import {
+  type AppointmentRepository,
+  PrismaAppointmentRepository,
+} from './modules/appointments/appointments.repository.js';
+import { registerAppointmentsRoutes } from './modules/appointments/appointments.routes.js';
+import {
   type CustomerRepository,
   PrismaCustomerRepository,
 } from './modules/customers/customers.repository.js';
@@ -33,6 +38,7 @@ interface BuildAppOptions extends FastifyServerOptions {
   customerRepository?: CustomerRepository;
   serviceRepository?: ServiceRepository;
   serviceRequestRepository?: ServiceRequestRepository;
+  appointmentRepository?: AppointmentRepository;
 }
 
 export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
@@ -41,6 +47,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     customerRepository = new PrismaCustomerRepository(),
     serviceRepository = new PrismaServiceRepository(),
     serviceRequestRepository = new PrismaServiceRequestRepository(),
+    appointmentRepository = new PrismaAppointmentRepository(),
     ...serverOptions
   } = options;
   const app = fastify({
@@ -62,6 +69,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   registerServicesRoutes(app, serviceRepository);
   registerCustomersRoutes(app, customerRepository);
   registerServiceRequestsRoutes(app, serviceRequestRepository);
+  registerAppointmentsRoutes(app, appointmentRepository);
 
   app.get('/health', () => {
     return {

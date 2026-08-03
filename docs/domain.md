@@ -37,8 +37,10 @@ estruturada permanece futura; nesta etapa a localização é textual.
 ### Appointment
 
 Representa a reserva de uma data e horário para atender uma `ServiceRequest`.
-Reagendamento, cancelamento, duração e conflitos de agenda serão tratados como
-regras próprias do módulo de agendamentos.
+Registra duração, estado e timestamps operacionais. Agendamentos cancelados são
+preservados; uma solicitação pode originar um novo registro após o cancelamento,
+mas somente um agendamento não cancelado pode estar ativo por vez. Enquanto não
+existirem técnicos ou prestadores, todos compartilham uma agenda operacional.
 
 ### ServiceArea
 
@@ -53,8 +55,8 @@ definido a partir dos requisitos operacionais.
 - Uma `ServiceRequest` referencia um `Service`.
 - Uma `ServiceRequest` poderá ser associada a uma `ServiceArea` quando as regras
   de cobertura forem implementadas.
-- Uma `ServiceRequest` pode originar nenhum, um ou vários `Appointment`, conforme
-  a política de histórico e reagendamento que vier a ser adotada.
+- Uma `ServiceRequest` pode originar nenhum, um ou vários `Appointment`; registros
+  cancelados são preservados e substituídos por um novo agendamento.
 - Um `Service` pode estar disponível em várias `ServiceArea`.
 - Uma `ServiceArea` pode oferecer vários `Service`.
 - Um `User` pode estar associado a um `Customer`, sujeito às regras futuras de
@@ -93,3 +95,10 @@ IN_PROGRESS -> SCHEDULED | CANCELLED
 `COMPLETED` e `CANCELLED` são finais. Transições para o mesmo estado são
 inválidas. Consulte [service-requests.md](service-requests.md) para o contrato
 completo.
+
+## Estados de um agendamento
+
+O fluxo principal é `SCHEDULED -> CONFIRMED -> IN_PROGRESS -> COMPLETED`.
+`SCHEDULED`, `CONFIRMED` e `IN_PROGRESS` podem ser cancelados; `CONFIRMED` pode
+voltar a `SCHEDULED` e `IN_PROGRESS` pode voltar a `CONFIRMED`. `COMPLETED` e
+`CANCELLED` são finais. Consulte [appointments.md](appointments.md).
