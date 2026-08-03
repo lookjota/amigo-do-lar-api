@@ -222,12 +222,21 @@ controladas. As operações administrativas exigem JWT com papel `ADMIN` ou
 A referência completa está em
 [docs/service-requests.md](docs/service-requests.md).
 
+## Agendamentos
+
+O módulo de agendamentos transforma solicitações aprovadas em atendimentos com
+duração, prevenção de conflitos, reagendamento e máquina de estados. Mudanças
+coordenadas com a solicitação são transacionais; as operações exigem JWT com
+papel `ADMIN` ou `OPERATOR`.
+
+A referência completa está em [docs/appointments.md](docs/appointments.md).
+
 ## Status
 
 Os marcos de fundação HTTP, banco de dados, autenticação administrativa,
-catálogo de serviços, gerenciamento de clientes e solicitações de serviço estão
-implementados. Endpoints e regras dos demais módulos serão adicionados nos
-próximos marcos.
+catálogo de serviços, gerenciamento de clientes, solicitações de serviço e
+agendamentos estão implementados. Endpoints e regras dos demais módulos serão
+adicionados nos próximos marcos.
 
 ## Roadmap resumido
 

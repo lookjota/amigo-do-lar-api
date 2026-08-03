@@ -91,7 +91,7 @@ model ServiceRequest {
   cancelledAt   DateTime?            @map("cancelled_at")
   customer      Customer             @relation(fields: [customerId], references: [id], onDelete: Restrict)
   service       Service              @relation(fields: [serviceId], references: [id], onDelete: Restrict)
-  appointment   Appointment?
+  appointments  Appointment[]
   createdAt     DateTime             @default(now()) @map("created_at")
   updatedAt     DateTime             @updatedAt @map("updated_at")
 
@@ -106,16 +106,22 @@ model ServiceRequest {
 
 model Appointment {
   id               String            @id @default(uuid()) @db.Uuid
-  serviceRequestId String            @unique @map("service_request_id") @db.Uuid
+  serviceRequestId String            @map("service_request_id") @db.Uuid
   scheduledAt      DateTime          @map("scheduled_at")
+  durationMinutes  Int               @map("duration_minutes")
   status           AppointmentStatus @default(SCHEDULED)
   notes            String?
+  startedAt        DateTime?         @map("started_at")
+  completedAt      DateTime?         @map("completed_at")
+  cancelledAt      DateTime?         @map("cancelled_at")
   serviceRequest   ServiceRequest    @relation(fields: [serviceRequestId], references: [id], onDelete: Restrict)
   createdAt        DateTime          @default(now()) @map("created_at")
   updatedAt        DateTime          @updatedAt @map("updated_at")
 
+  @@index([serviceRequestId])
   @@index([status])
   @@index([scheduledAt])
+  @@index([status, scheduledAt])
   @@map("appointments")
 }
 
