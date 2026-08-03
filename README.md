@@ -211,11 +211,23 @@ Telefones e emails são normalizados e únicos.
 
 A referência completa está em [docs/customers.md](docs/customers.md).
 
+## Solicitações de serviço
+
+O módulo de solicitações recebe pedidos públicos de orçamento, cria ou reutiliza
+clientes em uma transação, valida a disponibilidade do serviço e oferece à
+equipe administrativa uma fila paginada com filtros e transições de estado
+controladas. As operações administrativas exigem JWT com papel `ADMIN` ou
+`OPERATOR`.
+
+A referência completa está em
+[docs/service-requests.md](docs/service-requests.md).
+
 ## Status
 
 Os marcos de fundação HTTP, banco de dados, autenticação administrativa,
-catálogo de serviços e gerenciamento de clientes estão implementados. Endpoints
-e regras dos demais módulos serão adicionados nos próximos marcos.
+catálogo de serviços, gerenciamento de clientes e solicitações de serviço estão
+implementados. Endpoints e regras dos demais módulos serão adicionados nos
+próximos marcos.
 
 ## Roadmap resumido
 

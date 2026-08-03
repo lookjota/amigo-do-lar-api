@@ -49,9 +49,12 @@ Status: concluído no marco de entrega M6.
 
 ## M6 Service Requests
 
-- Implementar criação e acompanhamento de solicitações.
-- Definir transições de estado e regras de cancelamento.
-- Registrar serviço, cliente, área e informações necessárias ao atendimento.
+Status: concluído no marco de entrega solicitado como M7.
+
+- Criação pública transacional com criação ou reutilização de cliente.
+- Acompanhamento administrativo paginado, com busca, filtros e relacionamentos.
+- Máquina de estados explícita, timestamps terminais e cancelamento lógico.
+- Endereço e cidade textuais registrados; Service Areas permanece futuro.
 
 ## M7 Appointments
 

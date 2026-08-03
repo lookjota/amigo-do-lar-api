@@ -84,6 +84,11 @@ model ServiceRequest {
   description   String
   status        ServiceRequestStatus @default(PENDING)
   preferredDate DateTime?            @map("preferred_date")
+  address       String?
+  city          String?
+  internalNotes String?              @map("internal_notes")
+  completedAt   DateTime?            @map("completed_at")
+  cancelledAt   DateTime?            @map("cancelled_at")
   customer      Customer             @relation(fields: [customerId], references: [id], onDelete: Restrict)
   service       Service              @relation(fields: [serviceId], references: [id], onDelete: Restrict)
   appointment   Appointment?
@@ -94,6 +99,8 @@ model ServiceRequest {
   @@index([serviceId])
   @@index([status])
   @@index([preferredDate])
+  @@index([createdAt])
+  @@index([status, createdAt])
   @@map("service_requests")
 }
 

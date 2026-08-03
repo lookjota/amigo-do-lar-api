@@ -19,6 +19,11 @@ import {
   type ServiceRepository,
 } from './modules/services/services.repository.js';
 import { registerServicesRoutes } from './modules/services/services.routes.js';
+import {
+  PrismaServiceRequestRepository,
+  type ServiceRequestRepository,
+} from './modules/service-requests/service-requests.repository.js';
+import { registerServiceRequestsRoutes } from './modules/service-requests/service-requests.routes.js';
 import { registerJwt } from './shared/auth/jwt.js';
 import { registerDatabaseLifecycle } from './shared/database/index.js';
 import { registerErrorHandlers } from './shared/errors/error-handler.js';
@@ -27,6 +32,7 @@ interface BuildAppOptions extends FastifyServerOptions {
   authRepository?: AuthRepository;
   customerRepository?: CustomerRepository;
   serviceRepository?: ServiceRepository;
+  serviceRequestRepository?: ServiceRequestRepository;
 }
 
 export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
@@ -34,11 +40,17 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     authRepository = new PrismaAuthRepository(),
     customerRepository = new PrismaCustomerRepository(),
     serviceRepository = new PrismaServiceRepository(),
+    serviceRequestRepository = new PrismaServiceRequestRepository(),
     ...serverOptions
   } = options;
   const app = fastify({
     logger: {
       level: env.LOG_LEVEL,
+    },
+    ajv: {
+      customOptions: {
+        removeAdditional: false,
+      },
     },
     ...serverOptions,
   });
@@ -49,6 +61,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   registerAuthRoutes(app, authRepository);
   registerServicesRoutes(app, serviceRepository);
   registerCustomersRoutes(app, customerRepository);
+  registerServiceRequestsRoutes(app, serviceRequestRepository);
 
   app.get('/health', () => {
     return {

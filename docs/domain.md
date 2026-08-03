@@ -30,7 +30,9 @@ quando existirem requisitos concretos.
 ### ServiceRequest
 
 Representa a intenção de um `Customer` de contratar ou receber um `Service`.
-Concentra o contexto da solicitação, sua área de atendimento e seu estado atual.
+Concentra descrição, endereço e cidade do atendimento, data preferencial
+opcional, notas operacionais internas e seu estado atual. A área de atendimento
+estruturada permanece futura; nesta etapa a localização é textual.
 
 ### Appointment
 
@@ -49,7 +51,8 @@ definido a partir dos requisitos operacionais.
 - Um `Customer` pode criar várias `ServiceRequest`.
 - Uma `ServiceRequest` pertence a um `Customer`.
 - Uma `ServiceRequest` referencia um `Service`.
-- Uma `ServiceRequest` ocorre em uma `ServiceArea`.
+- Uma `ServiceRequest` poderá ser associada a uma `ServiceArea` quando as regras
+  de cobertura forem implementadas.
 - Uma `ServiceRequest` pode originar nenhum, um ou vários `Appointment`, conforme
   a política de histórico e reagendamento que vier a ser adotada.
 - Um `Service` pode estar disponível em várias `ServiceArea`.
@@ -59,28 +62,34 @@ definido a partir dos requisitos operacionais.
 
 ## Estados de uma solicitação
 
-Estados conceituais iniciais de `ServiceRequest`:
+Estados implementados de `ServiceRequest`:
 
 - `PENDING`: solicitação criada e aguardando análise.
-- `ACCEPTED`: solicitação aceita para atendimento.
+- `CONTACTED`: equipe realizou o primeiro contato.
+- `QUOTED`: orçamento preparado e apresentado.
+- `APPROVED`: orçamento aprovado pelo cliente.
 - `SCHEDULED`: atendimento agendado.
 - `IN_PROGRESS`: atendimento iniciado.
 - `COMPLETED`: atendimento concluído.
 - `CANCELLED`: solicitação cancelada.
-- `REJECTED`: solicitação recusada.
 
 Fluxo principal:
 
 ```text
-PENDING -> ACCEPTED -> SCHEDULED -> IN_PROGRESS -> COMPLETED
+PENDING -> CONTACTED -> QUOTED -> APPROVED -> SCHEDULED -> IN_PROGRESS -> COMPLETED
 ```
 
 Fluxos alternativos:
 
 ```text
-PENDING -> REJECTED
-PENDING | ACCEPTED | SCHEDULED -> CANCELLED
+PENDING -> CANCELLED
+CONTACTED -> CANCELLED
+QUOTED -> CONTACTED | CANCELLED
+APPROVED -> CANCELLED
+SCHEDULED -> APPROVED | CANCELLED
+IN_PROGRESS -> SCHEDULED | CANCELLED
 ```
 
-As transições finais, permissões, motivos obrigatórios e possibilidade de
-cancelamento após o início dependem de validação das regras do produto.
+`COMPLETED` e `CANCELLED` são finais. Transições para o mesmo estado são
+inválidas. Consulte [service-requests.md](service-requests.md) para o contrato
+completo.
