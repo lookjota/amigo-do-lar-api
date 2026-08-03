@@ -202,11 +202,32 @@ publicamente. Criação, atualização e desativação lógica exigem JWT e pape
 A referência completa, incluindo parâmetros, autorização e exemplos de request
 e response, está em [docs/services.md](docs/services.md).
 
+## Gerenciamento de clientes
+
+O módulo de clientes oferece cadastro, consulta, busca, paginação, atualização e
+desativação lógica. Todas as rotas exigem JWT; `ADMIN` e `OPERATOR` podem executar
+operações de atendimento, enquanto somente `ADMIN` altera o estado ativo.
+Telefones e emails são normalizados e únicos.
+
+A referência completa está em [docs/customers.md](docs/customers.md).
+
+## Solicitações de serviço
+
+O módulo de solicitações recebe pedidos públicos de orçamento, cria ou reutiliza
+clientes em uma transação, valida a disponibilidade do serviço e oferece à
+equipe administrativa uma fila paginada com filtros e transições de estado
+controladas. As operações administrativas exigem JWT com papel `ADMIN` ou
+`OPERATOR`.
+
+A referência completa está em
+[docs/service-requests.md](docs/service-requests.md).
+
 ## Status
 
-Os marcos de fundação HTTP, banco de dados, autenticação administrativa e
-catálogo de serviços estão implementados. Endpoints e regras dos demais módulos
-serão adicionados nos próximos marcos.
+Os marcos de fundação HTTP, banco de dados, autenticação administrativa,
+catálogo de serviços, gerenciamento de clientes e solicitações de serviço estão
+implementados. Endpoints e regras dos demais módulos serão adicionados nos
+próximos marcos.
 
 ## Roadmap resumido
 

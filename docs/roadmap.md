@@ -38,15 +38,23 @@ Status: concluído.
 
 ## M5 Customers
 
-- Implementar cadastro e manutenção de clientes.
-- Definir dados de contato e endereços necessários.
-- Aplicar regras de acesso e proteção de dados pessoais.
+Status: concluído no marco de entrega M6.
+
+- Cadastro e manutenção com telefone e email normalizados e únicos.
+- Consultas protegidas com paginação, busca, filtro de estado e ordenação.
+- Acesso para administradores e operadores, com mudança de estado restrita a
+  administradores.
+- Desativação lógica com preservação do histórico.
+- Endereços permanecem fora do escopo até existirem requisitos concretos.
 
 ## M6 Service Requests
 
-- Implementar criação e acompanhamento de solicitações.
-- Definir transições de estado e regras de cancelamento.
-- Registrar serviço, cliente, área e informações necessárias ao atendimento.
+Status: concluído no marco de entrega solicitado como M7.
+
+- Criação pública transacional com criação ou reutilização de cliente.
+- Acompanhamento administrativo paginado, com busca, filtros e relacionamentos.
+- Máquina de estados explícita, timestamps terminais e cancelamento lógico.
+- Endereço e cidade textuais registrados; Service Areas permanece futuro.
 
 ## M7 Appointments
 
