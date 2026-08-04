@@ -30,7 +30,11 @@ import {
 } from './modules/service-requests/service-requests.repository.js';
 import { registerServiceRequestsRoutes } from './modules/service-requests/service-requests.routes.js';
 import { registerJwt } from './shared/auth/jwt.js';
-import { registerDatabaseLifecycle } from './shared/database/index.js';
+import {
+  checkDatabaseReadiness,
+  type DatabaseReadinessCheck,
+  registerDatabaseLifecycle,
+} from './shared/database/index.js';
 import { registerErrorHandlers } from './shared/errors/error-handler.js';
 
 interface BuildAppOptions extends FastifyServerOptions {
@@ -39,6 +43,7 @@ interface BuildAppOptions extends FastifyServerOptions {
   serviceRepository?: ServiceRepository;
   serviceRequestRepository?: ServiceRequestRepository;
   appointmentRepository?: AppointmentRepository;
+  databaseReadinessCheck?: DatabaseReadinessCheck;
 }
 
 export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
@@ -48,6 +53,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     serviceRepository = new PrismaServiceRepository(),
     serviceRequestRepository = new PrismaServiceRequestRepository(),
     appointmentRepository = new PrismaAppointmentRepository(),
+    databaseReadinessCheck = checkDatabaseReadiness,
     ...serverOptions
   } = options;
   const app = fastify({
@@ -75,6 +81,20 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     return {
       status: 'ok',
     };
+  });
+
+  app.get('/ready', async (request, reply) => {
+    try {
+      await databaseReadinessCheck();
+      return {
+        status: 'ready',
+      };
+    } catch (error) {
+      request.log.error({ err: error }, 'Database readiness check failed');
+      return reply.status(503).send({
+        status: 'not_ready',
+      });
+    }
   });
 
   return app;

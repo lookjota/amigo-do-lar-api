@@ -85,6 +85,16 @@ npm run build
 npm run start
 ```
 
+## Health checks
+
+- `GET /health` é o liveness check da aplicação. Retorna `200` com
+  `{ "status": "ok" }` enquanto o processo HTTP estiver operacional e não
+  depende do banco de dados.
+- `GET /ready` é o readiness check. Executa uma consulta leve no PostgreSQL por
+  meio do Prisma e retorna `200` com `{ "status": "ready" }` quando o banco
+  responde. Se essa dependência estiver indisponível, retorna `503` com
+  `{ "status": "not_ready" }`, sem expor detalhes internos da falha.
+
 ## Respostas de erro
 
 A API converte erros em um único formato. O `requestId` permite correlacionar a
