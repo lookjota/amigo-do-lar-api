@@ -36,6 +36,7 @@ import {
   registerDatabaseLifecycle,
 } from './shared/database/index.js';
 import { registerErrorHandlers } from './shared/errors/error-handler.js';
+import { registerCors } from './shared/http/cors.js';
 
 interface BuildAppOptions extends FastifyServerOptions {
   authRepository?: AuthRepository;
@@ -68,6 +69,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     ...serverOptions,
   });
 
+  registerCors(app);
   registerJwt(app);
   registerDatabaseLifecycle(app);
   registerErrorHandlers(app);

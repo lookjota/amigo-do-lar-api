@@ -178,6 +178,13 @@ A resposta contém apenas `id`, `name`, `email` e `role`. Senha e
 
 ### Variáveis de ambiente
 
+- `CORS_ORIGINS`: lista obrigatória de origens HTTP(S) autorizadas, separadas
+  por vírgula. Espaços e entradas vazias são removidos. Cada valor deve conter
+  somente a origem (protocolo, host e porta opcional), sem caminho, query ou
+  fragmento. Exemplo local com um placeholder reservado para produção:
+  `http://localhost:5173,https://frontend.example.com`. Substitua o domínio
+  `example.com` pela origem real do frontend em produção. A API compara a origem
+  recebida exatamente com essa allowlist; wildcard não é aceito.
 - `JWT_SECRET`: segredo de assinatura com no mínimo 32 caracteres, sem valor
   padrão.
 - `JWT_EXPIRES_IN`: duração positiva do access token, em segundos.

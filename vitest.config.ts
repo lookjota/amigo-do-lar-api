@@ -8,6 +8,7 @@ export default defineConfig({
       ADMIN_EMAIL: 'admin@example.com',
       ADMIN_PASSWORD: 'test-secure-password',
       ADMIN_NAME: 'Test Admin',
+      CORS_ORIGINS: 'http://localhost:5173,https://frontend.example.com',
     },
     coverage: {
       provider: 'v8',

@@ -23,4 +23,29 @@ describe('environment configuration', () => {
 
     expect(env.PORT).toBe(4_321);
   });
+
+  it('normalizes a comma-separated CORS origin allowlist', async () => {
+    vi.stubEnv(
+      'CORS_ORIGINS',
+      ' http://localhost:5173, ,https://frontend.example.com ',
+    );
+
+    const { env } = await import('./env.js');
+
+    expect(env.CORS_ORIGINS).toEqual([
+      'http://localhost:5173',
+      'https://frontend.example.com',
+    ]);
+  });
+
+  it.each(['', ' , ', '*', 'https://frontend.example.com/path'])(
+    'rejects an invalid CORS origin allowlist: %j',
+    async (corsOrigins) => {
+      vi.stubEnv('CORS_ORIGINS', corsOrigins);
+
+      await expect(import('./env.js')).rejects.toThrow(
+        'Invalid environment variables',
+      );
+    },
+  );
 });

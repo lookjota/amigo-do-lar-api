@@ -25,6 +25,52 @@ describe('GET /health', () => {
     });
   });
 
+  it('returns CORS headers for an allowed origin', async () => {
+    const app = buildApp({ logger: false });
+    apps.add(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/health',
+      headers: { origin: 'http://localhost:5173' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['access-control-allow-origin']).toBe(
+      'http://localhost:5173',
+    );
+    expect(
+      response.headers['access-control-allow-credentials'],
+    ).toBeUndefined();
+  });
+
+  it('handles requests without an Origin header', async () => {
+    const app = buildApp({ logger: false });
+    apps.add(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/health',
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
+  it('does not return an allow-origin header for a denied origin', async () => {
+    const app = buildApp({ logger: false });
+    apps.add(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/health',
+      headers: { origin: 'https://invalid.example.com' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
   it('remains healthy when the database readiness check would fail', async () => {
     const databaseReadinessCheck = vi.fn().mockRejectedValue(
       new Error('sensitive database failure'),
@@ -42,6 +88,63 @@ describe('GET /health', () => {
       status: 'ok',
     });
     expect(databaseReadinessCheck).not.toHaveBeenCalled();
+  });
+});
+
+describe('CORS preflight', () => {
+  it('handles PATCH preflight for an allowed origin and headers', async () => {
+    const app = buildApp({ logger: false });
+    apps.add(app);
+
+    const response = await app.inject({
+      method: 'OPTIONS',
+      url: '/customers',
+      headers: {
+        origin: 'http://localhost:5173',
+        'access-control-request-method': 'PATCH',
+        'access-control-request-headers': 'content-type,authorization',
+      },
+    });
+
+    expect([200, 204]).toContain(response.statusCode);
+    expect(response.statusCode).not.toBe(404);
+    expect(response.headers['access-control-allow-origin']).toBe(
+      'http://localhost:5173',
+    );
+    const allowedMethods = response.headers['access-control-allow-methods'];
+    const allowedHeaders = response.headers['access-control-allow-headers'];
+
+    for (const method of [
+      'GET',
+      'HEAD',
+      'POST',
+      'PUT',
+      'PATCH',
+      'DELETE',
+      'OPTIONS',
+    ]) {
+      expect(allowedMethods).toContain(method);
+    }
+    expect(allowedHeaders?.toLowerCase()).toContain('content-type');
+    expect(allowedHeaders?.toLowerCase()).toContain('authorization');
+  });
+});
+
+describe('protected routes with CORS enabled', () => {
+  it('keeps GET /customers protected without a token', async () => {
+    const app = buildApp({ logger: false });
+    apps.add(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/customers',
+      headers: { origin: 'http://localhost:5173' },
+    });
+
+    expect(response.statusCode).toBe(401);
+    expect(response.headers['access-control-allow-origin']).toBe(
+      'http://localhost:5173',
+    );
   });
 });
 
