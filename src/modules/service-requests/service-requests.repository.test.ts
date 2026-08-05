@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const mocks = vi.hoisted(() => ({
   transaction: vi.fn(), findMany: vi.fn(), count: vi.fn(), findUnique: vi.fn(),
   txServiceFind: vi.fn(), txCustomerFind: vi.fn(), txCustomerCreate: vi.fn(),
-  txDuplicateFind: vi.fn(), txRequestCreate: vi.fn(),
+  txDuplicateFind: vi.fn(), txRequestCreate: vi.fn(), txEventCreate: vi.fn(),
 }));
 
 vi.mock('../../shared/database/index.js', () => ({
@@ -19,6 +19,7 @@ const tx = {
   service: { findUnique: mocks.txServiceFind },
   customer: { findUnique: mocks.txCustomerFind, create: mocks.txCustomerCreate },
   serviceRequest: { findFirst: mocks.txDuplicateFind, create: mocks.txRequestCreate },
+  serviceRequestEvent: { create: mocks.txEventCreate },
 };
 
 beforeEach(() => {
@@ -29,6 +30,7 @@ beforeEach(() => {
   });
   mocks.findMany.mockResolvedValue([]);
   mocks.count.mockResolvedValue(0);
+  mocks.txEventCreate.mockResolvedValue({ id: 'event' });
 });
 
 describe('PrismaServiceRequestRepository', () => {
@@ -88,5 +90,19 @@ describe('PrismaServiceRequestRepository', () => {
       description: 'Descrição válida', preferredDate: null, address: 'Endereço', city: 'Brasília',
       duplicateSince: new Date(),
     })).rejects.toThrow('write failed');
+  });
+
+  it('propagates timeline failure so the request transaction is rolled back', async () => {
+    mocks.txServiceFind.mockResolvedValue({ id: 'service', isActive: true });
+    mocks.txCustomerFind.mockResolvedValue({ id: 'customer' });
+    mocks.txDuplicateFind.mockResolvedValue(null);
+    mocks.txRequestCreate.mockResolvedValue({ id: 'request' });
+    mocks.txEventCreate.mockRejectedValue(new Error('timeline failed'));
+    await expect(new PrismaServiceRequestRepository().createPublic({
+      customer: { name: 'João', phone: '61999999999', email: null }, serviceId: 'service',
+      description: 'Descrição válida', preferredDate: null, address: 'Endereço', city: 'Brasília',
+      duplicateSince: new Date(),
+    })).rejects.toThrow('timeline failed');
+    expect(mocks.txRequestCreate).toHaveBeenCalledBefore(mocks.txEventCreate);
   });
 });

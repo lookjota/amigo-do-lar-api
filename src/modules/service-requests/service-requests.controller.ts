@@ -25,6 +25,6 @@ export class ServiceRequestsController {
   };
 
   updateStatus = async (request: FastifyRequest<{ Params: IdParams; Body: UpdateServiceRequestStatusInput }>, reply: FastifyReply): Promise<void> => {
-    await reply.send(await this.service.updateStatus(request.params.id, request.body));
+    await reply.send(await this.service.updateStatus(request.params.id, request.body, request.user.sub));
   };
 }

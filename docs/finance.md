@@ -50,6 +50,8 @@ Pagamentos exigem orçamento `APPROVED` e `amountCents` inteiro positivo. `PAID`
 
 Erros estáveis incluem `QUOTE_NOT_FOUND`, `QUOTE_ALREADY_EXISTS`, `QUOTE_INVALID_STATUS_TRANSITION`, `QUOTE_NOT_EDITABLE`, `QUOTE_DISCOUNT_EXCEEDS_SUBTOTAL`, `QUOTE_HAS_PAID_PAYMENTS`, `SERVICE_REQUEST_INVALID_STATUS_FOR_QUOTE`, `SERVICE_REQUEST_STATUS_CHANGED`, `QUOTE_SERVICE_REQUEST_SYNC_FAILED`, `PAYMENT_NOT_FOUND`, `PAYMENT_INVALID_STATUS_TRANSITION`, `PAYMENT_EXCEEDS_REMAINING_AMOUNT`, `PAYMENT_REQUIRES_APPROVED_QUOTE`, `PAYMENT_ALREADY_FINAL` e `FINANCE_CONCURRENT_UPDATE`.
 
+Criação e mudança de status de orçamento e pagamento escrevem eventos na timeline dentro da mesma transação. Metadata contém somente `quoteId`, `paymentId` e estados; valores e referências financeiras não são duplicados. O ator vem do JWT.
+
 ## Limitações
 
 Não há PDF, relatório avançado, conciliação, contabilidade, integração bancária, PIX automático, processamento de cartão ou gateway. Confirmação, cancelamento e reembolso são registros manuais.

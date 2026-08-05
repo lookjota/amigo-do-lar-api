@@ -71,8 +71,11 @@ Todas exigem JWT com papel `ADMIN` ou `OPERATOR`:
 - `GET /service-requests/:id`: detalhes com resumos de cliente e serviço;
 - `PATCH /service-requests/:id`: altera campos operacionais;
 - `PATCH /service-requests/:id/status`: executa uma transição de estado.
+- `GET /service-requests/:id/timeline`: consulta o histórico interno;
+- `POST /service-requests/:id/comments`: adiciona comentário interno imutável.
 
 Não existe DELETE. Cancelamento é uma transição para `CANCELLED`.
+Criação e mudança de status inserem `REQUEST_CREATED` e `STATUS_CHANGED` na mesma transação. O histórico inicia após a migration e não é reconstruído retroativamente.
 
 O PATCH operacional aceita somente `description`, `preferredDate`, `address`,
 `city` e `internalNotes`. Identificadores, relacionamentos, status e timestamps
@@ -156,6 +159,6 @@ incompatíveis são definidos como `null` em toda transição válida.
 ## Pendências futuras
 
 - idempotência forte por `Idempotency-Key`;
-- motivo estruturado de cancelamento e histórico de transições;
+- motivo estruturado de cancelamento;
 - integração com Service Areas e validação de CEP;
-- auditoria das alterações administrativas.
+- anexos, fotos, notificações e auditoria global.

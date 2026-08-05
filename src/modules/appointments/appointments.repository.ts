@@ -1,6 +1,8 @@
 import { Prisma } from '@prisma/client';
 
 import { database } from '../../shared/database/index.js';
+import { appendTimelineEvent } from '../service-request-timeline/service-request-timeline.repository.js';
+import { EVENT_TITLES } from '../service-request-timeline/service-request-timeline.types.js';
 import { appointmentIntervalsOverlap } from './appointment-status.js';
 import type {
   AppointmentEntity,
@@ -23,14 +25,14 @@ const relations = {
 } satisfies Prisma.AppointmentInclude;
 
 export interface AppointmentRepository {
-  create(serviceRequestId: string, input: AppointmentScheduleData): Promise<CreateAppointmentResult>;
+  create(serviceRequestId: string, input: AppointmentScheduleData, actorUserId?: string): Promise<CreateAppointmentResult>;
   list(input: ListAppointmentsFilters): Promise<{ data: AppointmentEntity[]; total: number }>;
   findById(id: string): Promise<AppointmentEntity | null>;
-  updateSchedule(id: string, input: UpdateAppointmentData): Promise<UpdateScheduleResult>;
+  updateSchedule(id: string, input: UpdateAppointmentData, actorUserId?: string): Promise<UpdateScheduleResult>;
   updateStatus(
     id: string,
     expectedStatus: AppointmentEntity['status'],
-    input: UpdateAppointmentStatusData,
+    input: UpdateAppointmentStatusData, actorUserId?: string,
   ): Promise<UpdateStatusResult>;
 }
 
@@ -47,7 +49,7 @@ function activeAppointmentConflict(error: unknown): boolean {
 }
 
 export class PrismaAppointmentRepository implements AppointmentRepository {
-  async create(serviceRequestId: string, input: AppointmentScheduleData): Promise<CreateAppointmentResult> {
+  async create(serviceRequestId: string, input: AppointmentScheduleData, actorUserId?: string): Promise<CreateAppointmentResult> {
     try {
       return await database.$transaction(async (transaction) => {
         const request = await transaction.serviceRequest.findUnique({
@@ -77,6 +79,13 @@ export class PrismaAppointmentRepository implements AppointmentRepository {
           data: { status: 'SCHEDULED', completedAt: null, cancelledAt: null },
         });
         appointment.serviceRequest.status = 'SCHEDULED';
+        await appendTimelineEvent(transaction, {
+          serviceRequestId,
+          actorUserId,
+          type: 'APPOINTMENT_CREATED',
+          title: EVENT_TITLES.APPOINTMENT_CREATED,
+          metadata: { appointmentId: appointment.id, scheduledAt: appointment.scheduledAt.toISOString() },
+        });
         return { outcome: 'created', appointment };
       }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     } catch (error) {
@@ -124,7 +133,7 @@ export class PrismaAppointmentRepository implements AppointmentRepository {
     return database.appointment.findUnique({ where: { id }, include: relations });
   }
 
-  async updateSchedule(id: string, input: UpdateAppointmentData): Promise<UpdateScheduleResult> {
+  async updateSchedule(id: string, input: UpdateAppointmentData, actorUserId?: string): Promise<UpdateScheduleResult> {
     try {
       return await database.$transaction(async (transaction) => {
         const existing = await transaction.appointment.findUnique({ where: { id } });
@@ -138,6 +147,19 @@ export class PrismaAppointmentRepository implements AppointmentRepository {
         const appointment = await transaction.appointment.update({
           where: { id }, data: input, include: relations,
         });
+        if (input.scheduledAt !== undefined && input.scheduledAt.getTime() !== existing.scheduledAt.getTime()) {
+          await appendTimelineEvent(transaction, {
+            serviceRequestId: existing.serviceRequestId,
+            actorUserId,
+            type: 'APPOINTMENT_RESCHEDULED',
+            title: EVENT_TITLES.APPOINTMENT_RESCHEDULED,
+            metadata: {
+              appointmentId: id,
+              scheduledAtFrom: existing.scheduledAt.toISOString(),
+              scheduledAtTo: input.scheduledAt.toISOString(),
+            },
+          });
+        }
         return { outcome: 'updated', appointment };
       }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     } catch (error) {
@@ -150,6 +172,7 @@ export class PrismaAppointmentRepository implements AppointmentRepository {
     id: string,
     expectedStatus: AppointmentEntity['status'],
     input: UpdateAppointmentStatusData,
+    actorUserId?: string,
   ): Promise<UpdateStatusResult> {
     return database.$transaction(async (transaction) => {
       const result = await transaction.appointment.updateMany({
@@ -177,6 +200,13 @@ export class PrismaAppointmentRepository implements AppointmentRepository {
         },
       });
       const appointment = await transaction.appointment.findUniqueOrThrow({ where: { id }, include: relations });
+      await appendTimelineEvent(transaction, {
+        serviceRequestId: current.serviceRequestId,
+        actorUserId,
+        type: 'APPOINTMENT_STATUS_CHANGED',
+        title: EVENT_TITLES.APPOINTMENT_STATUS_CHANGED,
+        metadata: { appointmentId: id, from: expectedStatus, to: input.status },
+      });
       return { outcome: 'updated', appointment };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
   }

@@ -76,7 +76,7 @@ export class AppointmentsService {
     private readonly now: () => Date = () => new Date(),
   ) {}
 
-  async create(input: CreateAppointmentInput): Promise<AppointmentEntity> {
+  async create(input: CreateAppointmentInput, actorUserId?: string): Promise<AppointmentEntity> {
     const scheduledAt = parseDate(input.scheduledAt, 'scheduledAt');
     if (scheduledAt.getTime() <= this.now().getTime()) {
       throw invalidField('scheduledAt', 'Scheduled date must be in the future', 'INVALID_APPOINTMENT_DATE');
@@ -86,7 +86,7 @@ export class AppointmentsService {
       scheduledAt,
       durationMinutes: input.durationMinutes,
       notes: normalizeNotes(input.notes) ?? null,
-    });
+    }, actorUserId);
     if (result.outcome === 'service_request_not_found') {
       throw new NotFoundError({ code: 'SERVICE_REQUEST_NOT_FOUND', message: 'Service request not found' });
     }
@@ -143,7 +143,7 @@ export class AppointmentsService {
     return appointment;
   }
 
-  async update(id: string, input: UpdateAppointmentInput): Promise<AppointmentEntity> {
+  async update(id: string, input: UpdateAppointmentInput, actorUserId?: string): Promise<AppointmentEntity> {
     const existing = await this.repository.findById(id);
     if (existing === null) throw appointmentNotFound();
     const changesSchedule = input.scheduledAt !== undefined || input.durationMinutes !== undefined;
@@ -169,7 +169,7 @@ export class AppointmentsService {
       ...(scheduledAt === undefined ? {} : { scheduledAt }),
       ...(input.durationMinutes === undefined ? {} : { durationMinutes: input.durationMinutes }),
       ...(input.notes === undefined ? {} : { notes: normalizeNotes(input.notes) ?? null }),
-    });
+    }, actorUserId);
     if (result.outcome === 'not_found') throw appointmentNotFound();
     if (result.outcome === 'time_conflict') {
       throw new ConflictError({ code: 'APPOINTMENT_TIME_CONFLICT', message: 'Appointment overlaps an existing appointment' });
@@ -177,7 +177,7 @@ export class AppointmentsService {
     return result.appointment;
   }
 
-  async updateStatus(id: string, input: UpdateAppointmentStatusInput): Promise<AppointmentEntity> {
+  async updateStatus(id: string, input: UpdateAppointmentStatusInput, actorUserId?: string): Promise<AppointmentEntity> {
     const existing = await this.repository.findById(id);
     if (existing === null) throw appointmentNotFound();
     if (!canTransitionAppointmentStatus(existing.status, input.status)) {
@@ -194,7 +194,7 @@ export class AppointmentsService {
       completedAt: input.status === 'COMPLETED' ? now : null,
       cancelledAt: input.status === 'CANCELLED' ? now : null,
       serviceRequestStatus: serviceRequestStatusFor(input.status),
-    });
+    }, actorUserId);
     if (result.outcome === 'not_found') throw appointmentNotFound();
     if (result.outcome === 'stale') throw this.invalidTransition(result.currentStatus, input.status);
     return result.appointment;

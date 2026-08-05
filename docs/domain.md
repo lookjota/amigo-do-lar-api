@@ -53,6 +53,10 @@ valores inteiros em centavos e total derivado. `Payment` registra recebimentos
 vinculados ao orçamento, preservando cancelamentos e reembolsos. O saldo e a
 situação financeira são derivados da soma dos pagamentos `PAID`.
 
+### ServiceRequestEvent
+
+Representa um fato imutável da timeline interna de uma solicitação. Pode apontar para o usuário autor ou ter autor nulo em ações públicas. O tipo é a fonte de verdade; metadata guarda somente estados, datas e identificadores selecionados.
+
 ### ServiceArea
 
 Representa uma região geográfica em que um ou mais serviços podem ser oferecidos.
@@ -70,6 +74,7 @@ definido a partir dos requisitos operacionais.
   cancelados são preservados e substituídos por um novo agendamento.
 - Uma `ServiceRequest` possui zero ou um `Quote`.
 - Um `Quote` possui zero ou vários `Payment`.
+- Uma `ServiceRequest` possui vários `ServiceRequestEvent`; um `User` pode ser autor de vários eventos.
 - Um `Service` pode estar disponível em várias `ServiceArea`.
 - Uma `ServiceArea` pode oferecer vários `Service`.
 - Um `User` pode estar associado a um `Customer`, sujeito às regras futuras de

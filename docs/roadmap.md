@@ -75,6 +75,14 @@ Status: concluído na branch `feature/finance-module`.
 
 ## M8 Security and Observability
 
+### Timeline operacional de solicitações
+
+Status: concluído na branch `feature/service-request-timeline`.
+
+- Eventos internos automáticos e comentários administrativos imutáveis.
+- Persistência atômica com solicitações, agendamentos e financeiro.
+- Sem backfill, anexos, notificações, WebSocket ou auditoria global nesta etapa.
+
 Entrega parcial: módulo administrativo de usuários concluído, com RBAC exclusivo
 para `ADMIN`, projeções públicas, redefinição segura de senha e proteção
 transacional do último administrador ativo. Revogação global de sessões permanece
