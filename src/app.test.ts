@@ -45,6 +45,75 @@ describe('GET /health', () => {
   });
 });
 
+describe('CORS', () => {
+  it.each([
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'https://amigo-do-lar-v2.vercel.app',
+  ])('allows the configured origin %s', async (origin) => {
+    const app = buildApp({ logger: false });
+    apps.add(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/health',
+      headers: { origin },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['access-control-allow-origin']).toBe(origin);
+    expect(response.headers['access-control-allow-origin']).not.toBe('*');
+  });
+
+  it('does not allow an origin that is not configured', async () => {
+    const app = buildApp({ logger: false });
+    apps.add(app);
+
+    const response = await app.inject({
+      method: 'GET',
+      url: '/health',
+      headers: { origin: 'https://untrusted.example.com' },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
+  it('keeps requests without an Origin header working', async () => {
+    const app = buildApp({ logger: false });
+    apps.add(app);
+
+    const response = await app.inject({ method: 'GET', url: '/health' });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toEqual({ status: 'ok' });
+  });
+
+  it('handles login preflight with the configured headers and methods', async () => {
+    const app = buildApp({ logger: false });
+    apps.add(app);
+
+    const response = await app.inject({
+      method: 'OPTIONS',
+      url: '/auth/login',
+      headers: {
+        origin: 'http://localhost:5173',
+        'access-control-request-method': 'POST',
+        'access-control-request-headers': 'content-type, authorization',
+      },
+    });
+
+    expect(response.statusCode).toBe(204);
+    expect(response.headers['access-control-allow-origin']).toBe(
+      'http://localhost:5173',
+    );
+    expect(response.headers['access-control-allow-methods']).toContain('POST');
+    expect(response.headers['access-control-allow-headers']).toBe(
+      'Content-Type, Authorization',
+    );
+  });
+});
+
 describe('GET /ready', () => {
   it('returns ready when the database responds', async () => {
     const databaseReadinessCheck = vi.fn().mockResolvedValue(undefined);

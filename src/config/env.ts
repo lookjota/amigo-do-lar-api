@@ -2,6 +2,17 @@ import 'dotenv/config';
 
 import { z } from 'zod';
 
+const corsOriginsSchema = z
+  .string()
+  .default('')
+  .transform((value) =>
+    value
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter((origin) => origin.length > 0),
+  )
+  .pipe(z.array(z.url()));
+
 const envSchema = z
   .object({
     NODE_ENV: z
@@ -12,6 +23,7 @@ const envSchema = z
     LOG_LEVEL: z
       .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
       .default('info'),
+    CORS_ORIGINS: corsOriginsSchema,
     DATABASE_URL: z.url().optional(),
     JWT_SECRET: z.string().min(32),
     JWT_EXPIRES_IN: z.coerce.number().int().positive(),

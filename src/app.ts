@@ -2,6 +2,7 @@ import fastify, {
   type FastifyInstance,
   type FastifyServerOptions,
 } from 'fastify';
+import cors from '@fastify/cors';
 
 import { env } from './config/env.js';
 import {
@@ -73,6 +74,16 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
       },
     },
     ...serverOptions,
+  });
+
+  const allowedOrigins = new Set(env.CORS_ORIGINS);
+
+  app.register(cors, {
+    origin(origin, callback) {
+      callback(null, origin === undefined || allowedOrigins.has(origin));
+    },
+    methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
 
   registerJwt(app);
