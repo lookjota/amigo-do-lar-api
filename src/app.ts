@@ -2,6 +2,8 @@ import fastify, {
   type FastifyInstance,
   type FastifyServerOptions,
 } from 'fastify';
+import cors from '@fastify/cors';
+
 import { env } from './config/env.js';
 import {
   type AuthRepository,
@@ -40,7 +42,6 @@ import {
   registerDatabaseLifecycle,
 } from './shared/database/index.js';
 import { registerErrorHandlers } from './shared/errors/error-handler.js';
-import { registerCors } from './shared/http/cors.js';
 
 interface BuildAppOptions extends FastifyServerOptions {
   authRepository?: AuthRepository;
@@ -75,7 +76,15 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     ...serverOptions,
   });
 
-  registerCors(app);
+  const allowedOrigins = new Set(env.CORS_ORIGINS);
+
+  app.register(cors, {
+    origin(origin, callback) {
+      callback(null, origin === undefined || allowedOrigins.has(origin));
+    },
+    methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
   registerJwt(app);
   registerDatabaseLifecycle(app);
   registerErrorHandlers(app);
