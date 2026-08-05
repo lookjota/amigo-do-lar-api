@@ -117,9 +117,11 @@ export interface UpdateServiceRequestData {
 export interface UpdateServiceRequestStatusInput { status: ServiceRequestStatus }
 
 export interface UpdateServiceRequestStatusData {
+  previousStatus: ServiceRequestStatus;
   status: ServiceRequestStatus;
   completedAt: Date | null;
   cancelledAt: Date | null;
+  actorUserId?: string;
 }
 
 export type CreatePublicRequestResult =

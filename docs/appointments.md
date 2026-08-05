@@ -33,6 +33,7 @@ A solicitação precisa existir e estar em `APPROVED`, não pode possuir outro
 agendamento ativo, o horário precisa ser futuro e o intervalo deve estar livre.
 A criação do `Appointment` e a mudança da `ServiceRequest` para `SCHEDULED`
 ocorrem na mesma transação serializável.
+Essa transação também registra `APPOINTMENT_CREATED`. Reagendamento de horário registra datas anterior e nova, e transições registram estados anterior e novo. O ator vem do JWT.
 
 ```bash
 curl -X POST http://localhost:3000/appointments \

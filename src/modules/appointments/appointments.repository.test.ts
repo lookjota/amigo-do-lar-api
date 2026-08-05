@@ -7,7 +7,7 @@ const mocks = vi.hoisted(() => ({
   txAppointmentFindFirst: vi.fn(), txAppointmentFindMany: vi.fn(),
   txAppointmentCreate: vi.fn(), txAppointmentFindUnique: vi.fn(),
   txAppointmentFindUniqueOrThrow: vi.fn(), txAppointmentUpdate: vi.fn(),
-  txAppointmentUpdateMany: vi.fn(),
+  txAppointmentUpdateMany: vi.fn(), txEventCreate: vi.fn(),
 }));
 
 vi.mock('../../shared/database/index.js', () => ({
@@ -34,6 +34,7 @@ const tx = {
     update: mocks.txAppointmentUpdate,
     updateMany: mocks.txAppointmentUpdateMany,
   },
+  serviceRequestEvent: { create: mocks.txEventCreate },
 };
 
 beforeEach(() => {
@@ -47,8 +48,9 @@ beforeEach(() => {
   mocks.txRequestFind.mockResolvedValue({ status: 'APPROVED' });
   mocks.txAppointmentFindFirst.mockResolvedValue(null);
   mocks.txAppointmentFindMany.mockResolvedValue([]);
-  mocks.txAppointmentCreate.mockResolvedValue({ id: 'appointment', serviceRequest: { status: 'APPROVED' } });
+  mocks.txAppointmentCreate.mockResolvedValue({ id: 'appointment', scheduledAt: new Date('2099-08-10T14:00:00.000Z'), serviceRequest: { status: 'APPROVED' } });
   mocks.txRequestUpdate.mockResolvedValue({});
+  mocks.txEventCreate.mockResolvedValue({ id: 'event' });
 });
 
 describe('PrismaAppointmentRepository', () => {

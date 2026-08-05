@@ -1,12 +1,12 @@
 import { Prisma } from '@prisma/client';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const mocks = vi.hoisted(() => ({ transaction: vi.fn(), findMany: vi.fn(), count: vi.fn(), quoteFind: vi.fn(), paymentAggregate: vi.fn(), txRequestFind: vi.fn(), txRequestUpdateMany: vi.fn(), txQuoteFind: vi.fn(), txQuoteFindOrThrow: vi.fn(), txQuoteCreate: vi.fn(), txQuoteUpdateMany: vi.fn(), txPaymentAggregate: vi.fn(), txPaymentCreate: vi.fn(), txPaymentCount: vi.fn() }));
+const mocks = vi.hoisted(() => ({ transaction: vi.fn(), findMany: vi.fn(), count: vi.fn(), quoteFind: vi.fn(), paymentAggregate: vi.fn(), txRequestFind: vi.fn(), txRequestUpdateMany: vi.fn(), txQuoteFind: vi.fn(), txQuoteFindOrThrow: vi.fn(), txQuoteCreate: vi.fn(), txQuoteUpdateMany: vi.fn(), txPaymentAggregate: vi.fn(), txPaymentCreate: vi.fn(), txPaymentCount: vi.fn(), txEventCreate: vi.fn() }));
 vi.mock('../../shared/database/index.js', () => ({ database: { $transaction: mocks.transaction, quote: { findMany: mocks.findMany, count: mocks.count, findUnique: mocks.quoteFind }, payment: { aggregate: mocks.paymentAggregate } } }));
 import { PrismaFinanceRepository } from './finance.repository.js';
 
-const tx = { serviceRequest: { findUnique: mocks.txRequestFind, updateMany: mocks.txRequestUpdateMany }, quote: { findUnique: mocks.txQuoteFind, findUniqueOrThrow: mocks.txQuoteFindOrThrow, create: mocks.txQuoteCreate, updateMany: mocks.txQuoteUpdateMany }, payment: { aggregate: mocks.txPaymentAggregate, create: mocks.txPaymentCreate, count: mocks.txPaymentCount } };
-beforeEach(() => { vi.clearAllMocks(); mocks.transaction.mockImplementation(async (argument: unknown, options?: unknown) => { void options; if (typeof argument === 'function') return (argument as (client: typeof tx) => unknown)(tx); return Promise.all(argument as Promise<unknown>[]); }); mocks.findMany.mockResolvedValue([]); mocks.count.mockResolvedValue(0); mocks.txRequestUpdateMany.mockResolvedValue({ count: 1 }); mocks.txQuoteUpdateMany.mockResolvedValue({ count: 1 }); mocks.txPaymentCount.mockResolvedValue(0); });
+const tx = { serviceRequest: { findUnique: mocks.txRequestFind, updateMany: mocks.txRequestUpdateMany }, quote: { findUnique: mocks.txQuoteFind, findUniqueOrThrow: mocks.txQuoteFindOrThrow, create: mocks.txQuoteCreate, updateMany: mocks.txQuoteUpdateMany }, payment: { aggregate: mocks.txPaymentAggregate, create: mocks.txPaymentCreate, count: mocks.txPaymentCount }, serviceRequestEvent: { create: mocks.txEventCreate } };
+beforeEach(() => { vi.clearAllMocks(); mocks.transaction.mockImplementation(async (argument: unknown, options?: unknown) => { void options; if (typeof argument === 'function') return (argument as (client: typeof tx) => unknown)(tx); return Promise.all(argument as Promise<unknown>[]); }); mocks.findMany.mockResolvedValue([]); mocks.count.mockResolvedValue(0); mocks.txRequestUpdateMany.mockResolvedValue({ count: 1 }); mocks.txQuoteUpdateMany.mockResolvedValue({ count: 1 }); mocks.txPaymentCount.mockResolvedValue(0); mocks.txEventCreate.mockResolvedValue({ id: 'event' }); });
 
 describe('PrismaFinanceRepository', () => {
   it('maps filters, customer relation, ordering and pagination', async () => {
@@ -15,8 +15,8 @@ describe('PrismaFinanceRepository', () => {
     expect(call.where.status).toBe('SENT'); expect(call.where.serviceRequest.customerId).toBe('11111111-1111-4111-8111-111111111111'); expect(call.orderBy).toEqual({ totalCents: 'asc' }); expect({ skip: call.skip, take: call.take }).toEqual({ skip: 10, take: 10 }); expect(call.include).toHaveProperty('serviceRequest');
   });
   it('creates a unique quote with the request check in one serializable transaction', async () => {
-    mocks.txRequestFind.mockResolvedValue({ status: 'CONTACTED' }); mocks.txQuoteFind.mockResolvedValue(null); mocks.txQuoteCreate.mockResolvedValue({ id: 'quote' }); mocks.txQuoteFindOrThrow.mockResolvedValue({ id: 'quote' });
-    await expect(new PrismaFinanceRepository().createQuote('request', { subtotalCents: 100, discountCents: 10, totalCents: 90 })).resolves.toEqual({ outcome: 'created', quote: { id: 'quote' } });
+    mocks.txRequestFind.mockResolvedValue({ status: 'CONTACTED' }); mocks.txQuoteFind.mockResolvedValue(null); mocks.txQuoteCreate.mockResolvedValue({ id: 'quote' }); mocks.txQuoteFindOrThrow.mockResolvedValue({ id: 'quote', serviceRequestId: 'request' });
+    await expect(new PrismaFinanceRepository().createQuote('request', { subtotalCents: 100, discountCents: 10, totalCents: 90 })).resolves.toEqual({ outcome: 'created', quote: { id: 'quote', serviceRequestId: 'request' } });
     expect(mocks.transaction).toHaveBeenCalledWith(expect.any(Function), { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     expect(mocks.txQuoteCreate).toHaveBeenCalledBefore(mocks.txRequestUpdateMany); expect(mocks.txRequestUpdateMany).toHaveBeenCalledWith({ where: { id: 'request', status: 'CONTACTED' }, data: { status: 'QUOTED' } });
   });
@@ -31,7 +31,7 @@ describe('PrismaFinanceRepository', () => {
     expect(mocks.txQuoteFindOrThrow).not.toHaveBeenCalled();
   });
   it('updates quote and service request atomically on approval', async () => {
-    mocks.txQuoteFindOrThrow.mockResolvedValueOnce({ serviceRequestId: 'request' }).mockResolvedValueOnce({ id: 'quote', status: 'APPROVED' });
+    mocks.txQuoteFindOrThrow.mockResolvedValueOnce({ serviceRequestId: 'request' }).mockResolvedValueOnce({ id: 'quote', serviceRequestId: 'request', status: 'APPROVED' });
     await expect(new PrismaFinanceRepository().updateQuoteStatus('quote', 'SENT', 'APPROVED', new Date())).resolves.toMatchObject({ outcome: 'updated', quote: { status: 'APPROVED' } });
     expect(mocks.txRequestUpdateMany).toHaveBeenCalledWith({ where: { id: 'request', status: 'QUOTED' }, data: { status: 'APPROVED' } });
   });

@@ -36,6 +36,11 @@ import {
 } from './modules/service-requests/service-requests.repository.js';
 import { registerServiceRequestsRoutes } from './modules/service-requests/service-requests.routes.js';
 import {
+  PrismaServiceRequestTimelineRepository,
+  type ServiceRequestTimelineRepository,
+} from './modules/service-request-timeline/service-request-timeline.repository.js';
+import { registerServiceRequestTimelineRoutes } from './modules/service-request-timeline/service-request-timeline.routes.js';
+import {
   PrismaUserRepository,
   type UserRepository,
 } from './modules/users/users.repository.js';
@@ -53,6 +58,7 @@ interface BuildAppOptions extends FastifyServerOptions {
   customerRepository?: CustomerRepository;
   serviceRepository?: ServiceRepository;
   serviceRequestRepository?: ServiceRequestRepository;
+  serviceRequestTimelineRepository?: ServiceRequestTimelineRepository;
   appointmentRepository?: AppointmentRepository;
   financeRepository?: FinanceRepository;
   userRepository?: UserRepository;
@@ -65,6 +71,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     customerRepository = new PrismaCustomerRepository(),
     serviceRepository = new PrismaServiceRepository(),
     serviceRequestRepository = new PrismaServiceRequestRepository(),
+    serviceRequestTimelineRepository = new PrismaServiceRequestTimelineRepository(),
     appointmentRepository = new PrismaAppointmentRepository(),
     financeRepository = new PrismaFinanceRepository(),
     userRepository = new PrismaUserRepository(),
@@ -99,6 +106,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   registerServicesRoutes(app, serviceRepository);
   registerCustomersRoutes(app, customerRepository);
   registerServiceRequestsRoutes(app, serviceRequestRepository);
+  registerServiceRequestTimelineRoutes(app, serviceRequestTimelineRepository);
   registerAppointmentsRoutes(app, appointmentRepository);
   registerFinanceRoutes(app, financeRepository);
   registerUsersRoutes(app, userRepository);

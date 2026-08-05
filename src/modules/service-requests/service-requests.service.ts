@@ -147,7 +147,7 @@ export class ServiceRequestsService {
     });
   }
 
-  async updateStatus(id: string, input: UpdateServiceRequestStatusInput): Promise<ServiceRequestEntity> {
+  async updateStatus(id: string, input: UpdateServiceRequestStatusInput, actorUserId?: string): Promise<ServiceRequestEntity> {
     const existing = await this.repository.findById(id);
     if (existing === null) throw requestNotFound();
     if (!canTransitionServiceRequestStatus(existing.status, input.status)) {
@@ -158,9 +158,11 @@ export class ServiceRequestsService {
     }
     const now = this.now();
     return this.repository.updateStatus(id, {
+      previousStatus: existing.status,
       status: input.status,
       completedAt: input.status === 'COMPLETED' ? now : null,
       cancelledAt: input.status === 'CANCELLED' ? now : null,
+      ...(actorUserId === undefined ? {} : { actorUserId }),
     });
   }
 

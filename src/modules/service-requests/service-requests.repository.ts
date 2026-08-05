@@ -1,6 +1,8 @@
 import { Prisma } from '@prisma/client';
 
 import { database } from '../../shared/database/index.js';
+import { appendTimelineEvent } from '../service-request-timeline/service-request-timeline.repository.js';
+import { EVENT_TITLES } from '../service-request-timeline/service-request-timeline.types.js';
 import type {
   CreatePublicRequestResult,
   NormalizedCreateServiceRequestData,
@@ -71,6 +73,11 @@ export class PrismaServiceRequestRepository implements ServiceRequestRepository 
           },
           include: relations,
         });
+        await appendTimelineEvent(transaction, {
+          serviceRequestId: request.id,
+          type: 'REQUEST_CREATED',
+          title: EVENT_TITLES.REQUEST_CREATED,
+        });
         return { outcome: 'created', request };
       });
     } catch (error) {
@@ -105,7 +112,21 @@ export class PrismaServiceRequestRepository implements ServiceRequestRepository 
   }
 
   async updateStatus(id: string, input: UpdateServiceRequestStatusData): Promise<ServiceRequestEntity> {
-    return database.serviceRequest.update({ where: { id }, data: input, include: relations });
+    return database.$transaction(async (transaction) => {
+      const request = await transaction.serviceRequest.update({
+        where: { id, status: input.previousStatus },
+        data: { status: input.status, completedAt: input.completedAt, cancelledAt: input.cancelledAt },
+        include: relations,
+      });
+      await appendTimelineEvent(transaction, {
+        serviceRequestId: id,
+        actorUserId: input.actorUserId,
+        type: 'STATUS_CHANGED',
+        title: EVENT_TITLES.STATUS_CHANGED,
+        metadata: { from: input.previousStatus, to: input.status },
+      });
+      return request;
+    });
   }
 
   private listWhere(input: ServiceRequestListFilters): Prisma.ServiceRequestWhereInput {

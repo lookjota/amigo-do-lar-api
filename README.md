@@ -263,6 +263,10 @@ backend. Não há gateway, integração bancária ou exclusão física nesta eta
 
 A referência completa está em [docs/finance.md](docs/finance.md).
 
+## Timeline operacional
+
+Solicitações mantêm uma timeline interna, imutável e paginada com eventos automáticos e comentários de `ADMIN` e `OPERATOR`. A ação principal e seu evento são atômicos. Consulte [docs/service-request-timeline.md](docs/service-request-timeline.md).
+
 ## Status
 
 Os marcos de fundação HTTP, banco de dados, autenticação administrativa,

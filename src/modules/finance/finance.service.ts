@@ -45,7 +45,7 @@ export function calculateQuoteTotal(subtotalCents: number, discountCents: number
 export class FinanceService {
   constructor(private readonly repository: FinanceRepository, private readonly now: () => Date = () => new Date()) {}
 
-  async createQuote(input: CreateQuoteInput): Promise<PublicQuote> {
+  async createQuote(input: CreateQuoteInput, actorUserId?: string): Promise<PublicQuote> {
     const discountCents = input.discountCents ?? 0;
     const description = optionalText(input.description, 'description', FINANCE_DESCRIPTION_MAX_LENGTH);
     const notes = optionalText(input.notes, 'notes', FINANCE_NOTES_MAX_LENGTH);
@@ -55,7 +55,7 @@ export class FinanceService {
       ...(description === undefined ? {} : { description }),
       ...(notes === undefined ? {} : { notes }),
       validUntil: input.validUntil == null ? null : parseDate(input.validUntil, 'validUntil'),
-    });
+    }, actorUserId);
     if (result.outcome === 'service_request_not_found') throw new NotFoundError({ code: 'SERVICE_REQUEST_NOT_FOUND', message: 'Service request not found' });
     if (result.outcome === 'service_request_invalid_status') throw new ConflictError({ code: 'SERVICE_REQUEST_INVALID_STATUS_FOR_QUOTE', message: `Cannot create a quote for a service request in ${result.status}` });
     if (result.outcome === 'service_request_status_changed') throw new ConflictError({ code: 'SERVICE_REQUEST_STATUS_CHANGED', message: 'Service request status changed concurrently' });
@@ -107,11 +107,11 @@ export class FinanceService {
     return this.withFinancialStatus(result.quote, await this.repository.paidTotal(id));
   }
 
-  async updateQuoteStatus(id: string, input: UpdateQuoteStatusInput): Promise<PublicQuote> {
+  async updateQuoteStatus(id: string, input: UpdateQuoteStatusInput, actorUserId?: string): Promise<PublicQuote> {
     const quote = await this.repository.findQuoteById(id);
     if (quote === null) throw quoteNotFound();
     if (!quoteTransitions[quote.status].includes(input.status)) throw new ConflictError({ code: 'QUOTE_INVALID_STATUS_TRANSITION', message: `Cannot transition quote from ${quote.status} to ${input.status}` });
-    const result = await this.repository.updateQuoteStatus(id, quote.status, input.status, this.now());
+    const result = await this.repository.updateQuoteStatus(id, quote.status, input.status, this.now(), actorUserId);
     if (result.outcome === 'not_found') throw quoteNotFound();
     if (result.outcome === 'stale') throw new ConflictError({ code: 'QUOTE_INVALID_STATUS_TRANSITION', message: 'Quote status changed concurrently' });
     if (result.outcome === 'has_paid_payments') throw new ConflictError({ code: 'QUOTE_HAS_PAID_PAYMENTS', message: 'A quote with paid payments cannot be cancelled' });
@@ -130,7 +130,7 @@ export class FinanceService {
     return payment;
   }
 
-  async createPayment(quoteId: string, input: CreatePaymentInput): Promise<PaymentEntity> {
+  async createPayment(quoteId: string, input: CreatePaymentInput, actorUserId?: string): Promise<PaymentEntity> {
     if (!Number.isSafeInteger(input.amountCents) || input.amountCents <= 0) throw invalid('amountCents', 'amountCents must be a positive safe integer');
     const status = input.status ?? 'PENDING';
     const paidAt = status === 'PAID' ? (input.paidAt == null ? this.now() : parseDate(input.paidAt, 'paidAt')) : null;
@@ -141,11 +141,11 @@ export class FinanceService {
       amountCents: input.amountCents, method: input.method, status, paidAt,
       ...(reference === undefined ? {} : { reference }),
       ...(notes === undefined ? {} : { notes }),
-    });
+    }, actorUserId);
     return this.paymentResult(result);
   }
 
-  async updatePaymentStatus(id: string, input: UpdatePaymentStatusInput): Promise<PaymentEntity> {
+  async updatePaymentStatus(id: string, input: UpdatePaymentStatusInput, actorUserId?: string): Promise<PaymentEntity> {
     const payment = await this.repository.findPaymentById(id);
     if (payment === null) throw paymentNotFound();
     if (!paymentTransitions[payment.status].includes(input.status)) {
@@ -153,7 +153,7 @@ export class FinanceService {
       throw new ConflictError({ code: final ? 'PAYMENT_ALREADY_FINAL' : 'PAYMENT_INVALID_STATUS_TRANSITION', message: `Cannot transition payment from ${payment.status} to ${input.status}` });
     }
     const paidAt = input.status === 'PAID' ? (input.paidAt == null ? this.now() : parseDate(input.paidAt, 'paidAt')) : payment.paidAt;
-    return this.paymentResult(await this.repository.updatePaymentStatus(id, payment.status, input.status, paidAt));
+    return this.paymentResult(await this.repository.updatePaymentStatus(id, payment.status, input.status, paidAt, actorUserId));
   }
 
   private paymentResult(result: Awaited<ReturnType<FinanceRepository['createPayment']>>): PaymentEntity {

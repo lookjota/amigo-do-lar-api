@@ -1,6 +1,8 @@
 import { Prisma, type PaymentStatus, type QuoteStatus } from '@prisma/client';
 
 import { database } from '../../shared/database/index.js';
+import { appendTimelineEvent } from '../service-request-timeline/service-request-timeline.repository.js';
+import { EVENT_TITLES } from '../service-request-timeline/service-request-timeline.types.js';
 import type {
   CreateQuoteResult, ListQuotesFilters, PaymentEntity, PaymentWriteData, PaymentWriteResult,
   QuoteEntity, QuoteStatusResult, QuoteWriteData, UpdateQuoteResult,
@@ -16,16 +18,16 @@ const quoteRelations = {
 } satisfies Prisma.QuoteInclude;
 
 export interface FinanceRepository {
-  createQuote(serviceRequestId: string, input: QuoteWriteData): Promise<CreateQuoteResult>;
+  createQuote(serviceRequestId: string, input: QuoteWriteData, actorUserId?: string): Promise<CreateQuoteResult>;
   listQuotes(input: ListQuotesFilters): Promise<{ data: QuoteEntity[]; total: number }>;
   findQuoteById(id: string): Promise<QuoteEntity | null>;
   updateQuote(id: string, input: Partial<QuoteWriteData>): Promise<UpdateQuoteResult>;
-  updateQuoteStatus(id: string, expected: QuoteStatus, next: QuoteStatus, at: Date): Promise<QuoteStatusResult>;
+  updateQuoteStatus(id: string, expected: QuoteStatus, next: QuoteStatus, at: Date, actorUserId?: string): Promise<QuoteStatusResult>;
   paidTotal(quoteId: string): Promise<number>;
   listPayments(quoteId: string): Promise<PaymentEntity[] | null>;
   findPaymentById(id: string): Promise<PaymentEntity | null>;
-  createPayment(quoteId: string, input: PaymentWriteData): Promise<PaymentWriteResult>;
-  updatePaymentStatus(id: string, expected: PaymentStatus, next: PaymentStatus, paidAt: Date | null): Promise<PaymentWriteResult>;
+  createPayment(quoteId: string, input: PaymentWriteData, actorUserId?: string): Promise<PaymentWriteResult>;
+  updatePaymentStatus(id: string, expected: PaymentStatus, next: PaymentStatus, paidAt: Date | null, actorUserId?: string): Promise<PaymentWriteResult>;
 }
 
 function serializableConflict(error: unknown): boolean {
@@ -53,7 +55,7 @@ class QuoteSynchronizationError extends Error {
 }
 
 export class PrismaFinanceRepository implements FinanceRepository {
-  async createQuote(serviceRequestId: string, input: QuoteWriteData): Promise<CreateQuoteResult> {
+  async createQuote(serviceRequestId: string, input: QuoteWriteData, actorUserId?: string): Promise<CreateQuoteResult> {
     try {
       return await serializableTransaction(async (tx) => {
         const request = await tx.serviceRequest.findUnique({ where: { id: serviceRequestId }, select: { status: true } });
@@ -64,7 +66,15 @@ export class PrismaFinanceRepository implements FinanceRepository {
         await tx.quote.create({ data: { serviceRequestId, ...input } });
         const transitioned = await tx.serviceRequest.updateMany({ where: { id: serviceRequestId, status: request.status }, data: { status: 'QUOTED' } });
         if (transitioned.count !== 1) throw new QuoteSynchronizationError('service_request_status_changed');
-        return { outcome: 'created', quote: await tx.quote.findUniqueOrThrow({ where: { serviceRequestId }, include: quoteRelations }) };
+        const quote = await tx.quote.findUniqueOrThrow({ where: { serviceRequestId }, include: quoteRelations });
+        await appendTimelineEvent(tx, {
+          serviceRequestId,
+          actorUserId,
+          type: 'QUOTE_CREATED',
+          title: EVENT_TITLES.QUOTE_CREATED,
+          metadata: { quoteId: quote.id },
+        });
+        return { outcome: 'created', quote };
       });
     } catch (error) {
       if (error instanceof QuoteSynchronizationError && error.outcome === 'service_request_status_changed') return { outcome: error.outcome };
@@ -103,7 +113,7 @@ export class PrismaFinanceRepository implements FinanceRepository {
     });
   }
 
-  async updateQuoteStatus(id: string, expected: QuoteStatus, next: QuoteStatus, at: Date): Promise<QuoteStatusResult> {
+  async updateQuoteStatus(id: string, expected: QuoteStatus, next: QuoteStatus, at: Date, actorUserId?: string): Promise<QuoteStatusResult> {
     try {
       return await serializableTransaction(async (tx) => {
       if (next === 'CANCELLED') {
@@ -125,7 +135,15 @@ export class PrismaFinanceRepository implements FinanceRepository {
         const transitioned = await tx.serviceRequest.updateMany({ where: { id: current.serviceRequestId, status: 'QUOTED' }, data: { status: 'APPROVED' } });
         if (transitioned.count !== 1) throw new QuoteSynchronizationError('service_request_sync_failed');
       }
-      return { outcome: 'updated', quote: await tx.quote.findUniqueOrThrow({ where: { id }, include: quoteRelations }) };
+      const quote = await tx.quote.findUniqueOrThrow({ where: { id }, include: quoteRelations });
+      await appendTimelineEvent(tx, {
+        serviceRequestId: quote.serviceRequestId,
+        actorUserId,
+        type: 'QUOTE_STATUS_CHANGED',
+        title: EVENT_TITLES.QUOTE_STATUS_CHANGED,
+        metadata: { quoteId: id, from: expected, to: next },
+      });
+      return { outcome: 'updated', quote };
       });
     } catch (error) {
       if (error instanceof QuoteSynchronizationError && error.outcome === 'service_request_sync_failed') return { outcome: error.outcome };
@@ -145,17 +163,25 @@ export class PrismaFinanceRepository implements FinanceRepository {
     return database.payment.findUnique({ where: { id } });
   }
 
-  async createPayment(quoteId: string, input: PaymentWriteData): Promise<PaymentWriteResult> {
+  async createPayment(quoteId: string, input: PaymentWriteData, actorUserId?: string): Promise<PaymentWriteResult> {
     try {
       return await serializableTransaction(async (tx) => {
-        const quote = await tx.quote.findUnique({ where: { id: quoteId }, select: { status: true, totalCents: true } });
+        const quote = await tx.quote.findUnique({ where: { id: quoteId }, select: { status: true, totalCents: true, serviceRequestId: true } });
         if (quote === null) return { outcome: 'quote_not_found' };
         if (quote.status !== 'APPROVED') return { outcome: 'quote_not_approved' };
         if (input.status === 'PAID') {
           const aggregate = await tx.payment.aggregate({ where: { quoteId, status: 'PAID' }, _sum: { amountCents: true } });
           if ((aggregate._sum.amountCents ?? 0) + input.amountCents > quote.totalCents) return { outcome: 'exceeds_remaining' };
         }
-        return { outcome: 'created', payment: await tx.payment.create({ data: { quoteId, ...input } }) };
+        const payment = await tx.payment.create({ data: { quoteId, ...input } });
+        await appendTimelineEvent(tx, {
+          serviceRequestId: quote.serviceRequestId,
+          actorUserId,
+          type: 'PAYMENT_CREATED',
+          title: EVENT_TITLES.PAYMENT_CREATED,
+          metadata: { paymentId: payment.id, quoteId },
+        });
+        return { outcome: 'created', payment };
       });
     } catch (error) {
       if (serializableConflict(error)) return { outcome: 'concurrent_conflict' };
@@ -163,10 +189,10 @@ export class PrismaFinanceRepository implements FinanceRepository {
     }
   }
 
-  async updatePaymentStatus(id: string, expected: PaymentStatus, next: PaymentStatus, paidAt: Date | null): Promise<PaymentWriteResult> {
+  async updatePaymentStatus(id: string, expected: PaymentStatus, next: PaymentStatus, paidAt: Date | null, actorUserId?: string): Promise<PaymentWriteResult> {
     try {
       return await serializableTransaction(async (tx) => {
-        const payment = await tx.payment.findUnique({ where: { id }, include: { quote: { select: { status: true, totalCents: true } } } });
+        const payment = await tx.payment.findUnique({ where: { id }, include: { quote: { select: { status: true, totalCents: true, serviceRequestId: true } } } });
         if (payment === null) return { outcome: 'payment_not_found' };
         if (payment.status !== expected) return { outcome: 'stale', status: payment.status };
         if (next === 'PAID') {
@@ -179,7 +205,15 @@ export class PrismaFinanceRepository implements FinanceRepository {
           const current = await tx.payment.findUnique({ where: { id }, select: { status: true } });
           return current === null ? { outcome: 'payment_not_found' } : { outcome: 'stale', status: current.status };
         }
-        return { outcome: 'updated', payment: await tx.payment.findUniqueOrThrow({ where: { id } }) };
+        const updatedPayment = await tx.payment.findUniqueOrThrow({ where: { id } });
+        await appendTimelineEvent(tx, {
+          serviceRequestId: payment.quote.serviceRequestId,
+          actorUserId,
+          type: 'PAYMENT_STATUS_CHANGED',
+          title: EVENT_TITLES.PAYMENT_STATUS_CHANGED,
+          metadata: { paymentId: id, quoteId: payment.quoteId, from: expected, to: next },
+        });
+        return { outcome: 'updated', payment: updatedPayment };
       });
     } catch (error) {
       if (serializableConflict(error)) return { outcome: 'concurrent_conflict' };

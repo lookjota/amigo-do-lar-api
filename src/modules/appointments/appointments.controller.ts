@@ -17,7 +17,7 @@ export class AppointmentsController {
     request: FastifyRequest<{ Body: CreateAppointmentInput }>,
     reply: FastifyReply,
   ): Promise<void> => {
-    await reply.status(201).send(await this.service.create(request.body));
+    await reply.status(201).send(await this.service.create(request.body, request.user.sub));
   };
 
   list = async (
@@ -38,13 +38,13 @@ export class AppointmentsController {
     request: FastifyRequest<{ Params: IdParams; Body: UpdateAppointmentInput }>,
     reply: FastifyReply,
   ): Promise<void> => {
-    await reply.send(await this.service.update(request.params.id, request.body));
+    await reply.send(await this.service.update(request.params.id, request.body, request.user.sub));
   };
 
   updateStatus = async (
     request: FastifyRequest<{ Params: IdParams; Body: UpdateAppointmentStatusInput }>,
     reply: FastifyReply,
   ): Promise<void> => {
-    await reply.send(await this.service.updateStatus(request.params.id, request.body));
+    await reply.send(await this.service.updateStatus(request.params.id, request.body, request.user.sub));
   };
 }
