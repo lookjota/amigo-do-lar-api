@@ -25,19 +25,23 @@ describe('GET /health', () => {
     });
   });
 
-  it('returns CORS headers for an allowed origin', async () => {
+  it.each([
+    'http://localhost:5173',
+    'http://localhost:5174',
+    'https://amigo-do-lar-v2.vercel.app',
+  ])('returns CORS headers for the allowed origin %s', async (origin) => {
     const app = buildApp({ logger: false });
     apps.add(app);
 
     const response = await app.inject({
       method: 'GET',
       url: '/health',
-      headers: { origin: 'http://localhost:5173' },
+      headers: { origin },
     });
 
     expect(response.statusCode).toBe(200);
     expect(response.headers['access-control-allow-origin']).toBe(
-      'http://localhost:5173',
+      origin,
     );
     expect(
       response.headers['access-control-allow-credentials'],
@@ -127,6 +131,30 @@ describe('CORS preflight', () => {
     }
     expect(allowedHeaders?.toLowerCase()).toContain('content-type');
     expect(allowedHeaders?.toLowerCase()).toContain('authorization');
+  });
+
+  it('handles login preflight with the configured headers and methods', async () => {
+    const app = buildApp({ logger: false });
+    apps.add(app);
+
+    const response = await app.inject({
+      method: 'OPTIONS',
+      url: '/auth/login',
+      headers: {
+        origin: 'http://localhost:5173',
+        'access-control-request-method': 'POST',
+        'access-control-request-headers': 'content-type, authorization',
+      },
+    });
+
+    expect(response.statusCode).toBe(204);
+    expect(response.headers['access-control-allow-origin']).toBe(
+      'http://localhost:5173',
+    );
+    expect(response.headers['access-control-allow-methods']).toContain('POST');
+    expect(response.headers['access-control-allow-headers']).toBe(
+      'Content-Type, Authorization',
+    );
   });
 });
 

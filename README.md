@@ -228,6 +228,13 @@ Telefones e emails são normalizados e únicos.
 
 A referência completa está em [docs/customers.md](docs/customers.md).
 
+## Usuários administrativos
+
+O módulo de usuários permite que somente administradores ativos listem, consultem,
+criem e editem contas, alterem estado e redefinam senhas. Emails são normalizados,
+senhas usam Argon2id e transações protegem a existência de pelo menos um
+administrador ativo. A referência completa está em [docs/users.md](docs/users.md).
+
 ## Solicitações de serviço
 
 O módulo de solicitações recebe pedidos públicos de orçamento, cria ou reutiliza
@@ -252,7 +259,7 @@ A referência completa está em [docs/appointments.md](docs/appointments.md).
 
 Os marcos de fundação HTTP, banco de dados, autenticação administrativa,
 catálogo de serviços, gerenciamento de clientes, solicitações de serviço e
-agendamentos estão implementados. Endpoints e regras dos demais módulos serão
+agendamentos e usuários administrativos estão implementados. Endpoints e regras dos demais módulos serão
 adicionados nos próximos marcos.
 
 ## Roadmap resumido

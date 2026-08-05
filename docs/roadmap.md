@@ -66,6 +66,11 @@ Status: concluído no marco de entrega solicitado como M8.
 
 ## M8 Security and Observability
 
+Entrega parcial: módulo administrativo de usuários concluído, com RBAC exclusivo
+para `ADMIN`, projeções públicas, redefinição segura de senha e proteção
+transacional do último administrador ativo. Revogação global de sessões permanece
+planejada.
+
 - Reforçar CORS, headers de segurança e rate limiting.
 - Aplicar redaction de dados sensíveis nos logs.
 - Adicionar métricas, correlação de requisições e sinais operacionais.
