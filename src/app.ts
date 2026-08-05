@@ -16,6 +16,11 @@ import {
 } from './modules/appointments/appointments.repository.js';
 import { registerAppointmentsRoutes } from './modules/appointments/appointments.routes.js';
 import {
+  type FinanceRepository,
+  PrismaFinanceRepository,
+} from './modules/finance/finance.repository.js';
+import { registerFinanceRoutes } from './modules/finance/finance.routes.js';
+import {
   type CustomerRepository,
   PrismaCustomerRepository,
 } from './modules/customers/customers.repository.js';
@@ -49,6 +54,7 @@ interface BuildAppOptions extends FastifyServerOptions {
   serviceRepository?: ServiceRepository;
   serviceRequestRepository?: ServiceRequestRepository;
   appointmentRepository?: AppointmentRepository;
+  financeRepository?: FinanceRepository;
   userRepository?: UserRepository;
   databaseReadinessCheck?: DatabaseReadinessCheck;
 }
@@ -60,6 +66,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     serviceRepository = new PrismaServiceRepository(),
     serviceRequestRepository = new PrismaServiceRequestRepository(),
     appointmentRepository = new PrismaAppointmentRepository(),
+    financeRepository = new PrismaFinanceRepository(),
     userRepository = new PrismaUserRepository(),
     databaseReadinessCheck = checkDatabaseReadiness,
     ...serverOptions
@@ -93,6 +100,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   registerCustomersRoutes(app, customerRepository);
   registerServiceRequestsRoutes(app, serviceRequestRepository);
   registerAppointmentsRoutes(app, appointmentRepository);
+  registerFinanceRoutes(app, financeRepository);
   registerUsersRoutes(app, userRepository);
 
   app.get('/health', () => {

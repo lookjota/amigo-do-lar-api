@@ -26,6 +26,9 @@ HTTP -> Controller -> Service/Use Case -> Repository -> Database
 No módulo de usuários administrativos, respostas são construídas a partir de uma
 projeção pública explícita no repository. Alterações capazes de remover o último
 administrador ativo são verificadas e persistidas na mesma transação serializável.
+No módulo financeiro, a soma paga e a gravação compartilham uma transação
+serializável. A aprovação do orçamento e a sincronização válida da solicitação
+também são atômicas.
 
 ## Responsabilidades
 

@@ -31,6 +31,30 @@ enum AppointmentStatus {
   CANCELLED
 }
 
+enum QuoteStatus {
+  DRAFT
+  SENT
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  PIX
+  CASH
+  CREDIT_CARD
+  DEBIT_CARD
+  BANK_TRANSFER
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  CANCELLED
+  REFUNDED
+}
+
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   name         String
@@ -92,6 +116,7 @@ model ServiceRequest {
   customer      Customer             @relation(fields: [customerId], references: [id], onDelete: Restrict)
   service       Service              @relation(fields: [serviceId], references: [id], onDelete: Restrict)
   appointments  Appointment[]
+  quote         Quote?
   createdAt     DateTime             @default(now()) @map("created_at")
   updatedAt     DateTime             @updatedAt @map("updated_at")
 
@@ -102,6 +127,50 @@ model ServiceRequest {
   @@index([createdAt])
   @@index([status, createdAt])
   @@map("service_requests")
+}
+
+model Quote {
+  id               String         @id @default(uuid()) @db.Uuid
+  serviceRequestId String         @unique @map("service_request_id") @db.Uuid
+  subtotalCents    Int            @map("subtotal_cents")
+  discountCents    Int            @default(0) @map("discount_cents")
+  totalCents       Int            @map("total_cents")
+  description      String?
+  notes            String?
+  status           QuoteStatus    @default(DRAFT)
+  validUntil       DateTime?      @map("valid_until")
+  approvedAt       DateTime?      @map("approved_at")
+  rejectedAt       DateTime?      @map("rejected_at")
+  cancelledAt      DateTime?      @map("cancelled_at")
+  serviceRequest   ServiceRequest @relation(fields: [serviceRequestId], references: [id], onDelete: Restrict)
+  payments         Payment[]
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@map("quotes")
+}
+
+model Payment {
+  id          String        @id @default(uuid()) @db.Uuid
+  quoteId     String        @map("quote_id") @db.Uuid
+  amountCents Int           @map("amount_cents")
+  method      PaymentMethod
+  status      PaymentStatus @default(PENDING)
+  paidAt      DateTime?     @map("paid_at")
+  reference   String?
+  notes       String?
+  quote       Quote         @relation(fields: [quoteId], references: [id], onDelete: Restrict)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@index([quoteId])
+  @@index([status])
+  @@index([createdAt])
+  @@index([quoteId, status])
+  @@map("payments")
 }
 
 model Appointment {
