@@ -1,7 +1,7 @@
 # Amigo do Lar API
 
 API REST da plataforma Amigo do Lar, responsável por organizar clientes, serviços,
-áreas de atendimento, solicitações e agendamentos.
+áreas de atendimento, solicitações, agendamentos e finanças operacionais.
 
 ## Objetivo
 
@@ -254,6 +254,14 @@ coordenadas com a solicitação são transacionais; as operações exigem JWT co
 papel `ADMIN` ou `OPERATOR`.
 
 A referência completa está em [docs/appointments.md](docs/appointments.md).
+
+## Financeiro operacional
+
+O módulo financeiro mantém um orçamento por solicitação, pagamentos com histórico
+e saldo derivado. Valores são inteiros em centavos e o total é calculado pelo
+backend. Não há gateway, integração bancária ou exclusão física nesta etapa.
+
+A referência completa está em [docs/finance.md](docs/finance.md).
 
 ## Status
 

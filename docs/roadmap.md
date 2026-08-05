@@ -64,6 +64,15 @@ Status: concluído no marco de entrega solicitado como M8.
 - Disponibilidade por intervalos em uma agenda operacional única.
 - Máquina de estados e sincronização transacional com solicitações.
 
+## M8.1 Financeiro operacional
+
+Status: concluído na branch `feature/finance-module`.
+
+- Orçamento único por solicitação e valores inteiros em centavos.
+- Pagamentos manuais, histórico e situação financeira derivada.
+- Transições explícitas e proteção transacional contra excesso concorrente.
+- Relatórios, PDF, conciliação e gateways permanecem futuros.
+
 ## M8 Security and Observability
 
 Entrega parcial: módulo administrativo de usuários concluído, com RBAC exclusivo

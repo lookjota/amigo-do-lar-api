@@ -46,6 +46,13 @@ preservados; uma solicitação pode originar um novo registro após o cancelamen
 mas somente um agendamento não cancelado pode estar ativo por vez. Enquanto não
 existirem técnicos ou prestadores, todos compartilham uma agenda operacional.
 
+### Quote e Payment
+
+`Quote` representa o orçamento operacional único de uma `ServiceRequest`, com
+valores inteiros em centavos e total derivado. `Payment` registra recebimentos
+vinculados ao orçamento, preservando cancelamentos e reembolsos. O saldo e a
+situação financeira são derivados da soma dos pagamentos `PAID`.
+
 ### ServiceArea
 
 Representa uma região geográfica em que um ou mais serviços podem ser oferecidos.
@@ -61,6 +68,8 @@ definido a partir dos requisitos operacionais.
   de cobertura forem implementadas.
 - Uma `ServiceRequest` pode originar nenhum, um ou vários `Appointment`; registros
   cancelados são preservados e substituídos por um novo agendamento.
+- Uma `ServiceRequest` possui zero ou um `Quote`.
+- Um `Quote` possui zero ou vários `Payment`.
 - Um `Service` pode estar disponível em várias `ServiceArea`.
 - Uma `ServiceArea` pode oferecer vários `Service`.
 - Um `User` pode estar associado a um `Customer`, sujeito às regras futuras de
@@ -100,9 +109,20 @@ IN_PROGRESS -> SCHEDULED | CANCELLED
 inválidas. Consulte [service-requests.md](service-requests.md) para o contrato
 completo.
 
+A criação de um orçamento executa atomicamente a transição `CONTACTED -> QUOTED`.
+A aprovação do orçamento executa atomicamente `QUOTED -> APPROVED`; escritas
+condicionais impedem que concorrência sobrescreva outro estado da solicitação.
+
 ## Estados de um agendamento
 
 O fluxo principal é `SCHEDULED -> CONFIRMED -> IN_PROGRESS -> COMPLETED`.
 `SCHEDULED`, `CONFIRMED` e `IN_PROGRESS` podem ser cancelados; `CONFIRMED` pode
 voltar a `SCHEDULED` e `IN_PROGRESS` pode voltar a `CONFIRMED`. `COMPLETED` e
 `CANCELLED` são finais. Consulte [appointments.md](appointments.md).
+
+## Estados financeiros
+
+O orçamento segue `DRAFT -> SENT -> APPROVED | REJECTED | CANCELLED`, também
+permitindo `DRAFT -> CANCELLED`. Um aprovado só é cancelado sem pagamento pago.
+O pagamento segue `PENDING -> PAID | CANCELLED` e `PAID -> REFUNDED`. Consulte
+[finance.md](finance.md).

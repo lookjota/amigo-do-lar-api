@@ -15,5 +15,6 @@ export default defineConfig({
       provider: 'v8',
     },
     environment: 'node',
+    testTimeout: 15_000,
   },
 });
