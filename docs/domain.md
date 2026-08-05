@@ -10,6 +10,10 @@ devem ser confirmadas durante a implementação de cada módulo.
 
 Representa uma identidade capaz de autenticar-se e executar ações na plataforma.
 Contém as informações essenciais de acesso, estado da conta e autorização.
+Possui papel `ADMIN` ou `OPERATOR`. Somente administradores ativos gerenciam
+usuários; o último administrador ativo não pode ser desativado ou rebaixado e um
+administrador não pode desativar a própria conta. Email é normalizado e único, e
+senha existe na persistência somente como hash Argon2id.
 
 ### Customer
 

@@ -29,6 +29,11 @@ import {
   type ServiceRequestRepository,
 } from './modules/service-requests/service-requests.repository.js';
 import { registerServiceRequestsRoutes } from './modules/service-requests/service-requests.routes.js';
+import {
+  PrismaUserRepository,
+  type UserRepository,
+} from './modules/users/users.repository.js';
+import { registerUsersRoutes } from './modules/users/users.routes.js';
 import { registerJwt } from './shared/auth/jwt.js';
 import {
   checkDatabaseReadiness,
@@ -43,6 +48,7 @@ interface BuildAppOptions extends FastifyServerOptions {
   serviceRepository?: ServiceRepository;
   serviceRequestRepository?: ServiceRequestRepository;
   appointmentRepository?: AppointmentRepository;
+  userRepository?: UserRepository;
   databaseReadinessCheck?: DatabaseReadinessCheck;
 }
 
@@ -53,6 +59,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     serviceRepository = new PrismaServiceRepository(),
     serviceRequestRepository = new PrismaServiceRequestRepository(),
     appointmentRepository = new PrismaAppointmentRepository(),
+    userRepository = new PrismaUserRepository(),
     databaseReadinessCheck = checkDatabaseReadiness,
     ...serverOptions
   } = options;
@@ -76,6 +83,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   registerCustomersRoutes(app, customerRepository);
   registerServiceRequestsRoutes(app, serviceRequestRepository);
   registerAppointmentsRoutes(app, appointmentRepository);
+  registerUsersRoutes(app, userRepository);
 
   app.get('/health', () => {
     return {
