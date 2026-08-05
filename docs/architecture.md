@@ -23,6 +23,10 @@ HTTP -> Controller -> Service/Use Case -> Repository -> Database
 5. A implementação de infraestrutura acessa o banco de dados.
 6. O resultado retorna pelas camadas e é convertido em resposta HTTP.
 
+No módulo de usuários administrativos, respostas são construídas a partir de uma
+projeção pública explícita no repository. Alterações capazes de remover o último
+administrador ativo são verificadas e persistidas na mesma transação serializável.
+
 ## Responsabilidades
 
 ### Controller
