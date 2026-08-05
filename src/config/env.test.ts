@@ -38,7 +38,13 @@ describe('environment configuration', () => {
     ]);
   });
 
-  it.each(['', ' , ', '*', 'https://frontend.example.com/path'])(
+  it.each([
+    '',
+    ' , ',
+    '*',
+    'https://frontend.example.com/path',
+    'http://localhost:5173,not-a-url',
+  ])(
     'rejects an invalid CORS origin allowlist: %j',
     async (corsOrigins) => {
       vi.stubEnv('CORS_ORIGINS', corsOrigins);
