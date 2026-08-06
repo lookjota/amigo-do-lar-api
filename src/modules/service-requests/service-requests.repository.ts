@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { database } from '../../shared/database/index.js';
 import { appendTimelineEvent } from '../service-request-timeline/service-request-timeline.repository.js';
 import { EVENT_TITLES } from '../service-request-timeline/service-request-timeline.types.js';
+import { createOperationalNotifications } from '../notifications/notifications.repository.js';
 import type {
   CreatePublicRequestResult,
   NormalizedCreateServiceRequestData,
@@ -78,6 +79,10 @@ export class PrismaServiceRequestRepository implements ServiceRequestRepository 
           type: 'REQUEST_CREATED',
           title: EVENT_TITLES.REQUEST_CREATED,
         });
+        await createOperationalNotifications(transaction, {
+          type: 'SERVICE_REQUEST_CREATED', message: `Uma nova solicitação foi criada por ${customer.name}.`,
+          resourceType: 'SERVICE_REQUEST', resourceId: request.id, roles: ['ADMIN', 'OPERATOR'],
+        });
         return { outcome: 'created', request };
       });
     } catch (error) {
@@ -124,6 +129,12 @@ export class PrismaServiceRequestRepository implements ServiceRequestRepository 
         type: 'STATUS_CHANGED',
         title: EVENT_TITLES.STATUS_CHANGED,
         metadata: { from: input.previousStatus, to: input.status },
+      });
+      await createOperationalNotifications(transaction, {
+        actorUserId: input.actorUserId, type: 'SERVICE_REQUEST_STATUS_CHANGED',
+        message: `A solicitação mudou de ${input.previousStatus} para ${input.status}.`,
+        resourceType: 'SERVICE_REQUEST', resourceId: id,
+        metadata: { from: input.previousStatus, to: input.status }, roles: ['ADMIN', 'OPERATOR'],
       });
       return request;
     });

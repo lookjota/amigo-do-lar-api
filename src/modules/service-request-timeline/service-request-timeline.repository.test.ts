@@ -10,7 +10,7 @@ vi.mock('../../shared/database/index.js', () => ({ database: {
 } }));
 import { PrismaServiceRequestTimelineRepository, appendTimelineEvent } from './service-request-timeline.repository.js';
 
-const tx = { serviceRequest: { findUnique: mocks.requestFind }, serviceRequestEvent: { create: mocks.eventCreate } };
+const tx = { serviceRequest: { findUnique: mocks.requestFind }, serviceRequestEvent: { create: mocks.eventCreate }, user: { findMany: vi.fn().mockResolvedValue([]) }, notification: { createMany: vi.fn().mockResolvedValue({ count: 0 }) } };
 beforeEach(() => {
   vi.clearAllMocks();
   mocks.transaction.mockImplementation((argument: unknown) => Promise.resolve(typeof argument === 'function'

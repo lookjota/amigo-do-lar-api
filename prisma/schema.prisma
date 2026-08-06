@@ -72,6 +72,26 @@ enum ServiceRequestEventVisibility {
   INTERNAL
 }
 
+enum NotificationType {
+  SERVICE_REQUEST_CREATED
+  SERVICE_REQUEST_STATUS_CHANGED
+  COMMENT_ADDED
+  APPOINTMENT_CREATED
+  APPOINTMENT_RESCHEDULED
+  APPOINTMENT_STATUS_CHANGED
+  QUOTE_CREATED
+  QUOTE_STATUS_CHANGED
+  PAYMENT_CREATED
+  PAYMENT_STATUS_CHANGED
+}
+
+enum NotificationResourceType {
+  SERVICE_REQUEST
+  APPOINTMENT
+  QUOTE
+  PAYMENT
+}
+
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   name         String
@@ -82,9 +102,33 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
   serviceRequestEvents ServiceRequestEvent[]
+  receivedNotifications Notification[] @relation("NotificationRecipient")
+  actedNotifications    Notification[] @relation("NotificationActor")
 
   @@index([isActive])
   @@map("users")
+}
+
+model Notification {
+  id              String                   @id @default(uuid()) @db.Uuid
+  recipientUserId String                   @map("recipient_user_id") @db.Uuid
+  actorUserId     String?                  @map("actor_user_id") @db.Uuid
+  type            NotificationType
+  title           String
+  message         String
+  resourceType    NotificationResourceType @map("resource_type")
+  resourceId      String?                  @map("resource_id") @db.Uuid
+  metadata        Json?
+  readAt          DateTime?                @map("read_at")
+  createdAt       DateTime                 @default(now()) @map("created_at")
+  recipient       User                     @relation("NotificationRecipient", fields: [recipientUserId], references: [id], onDelete: Restrict)
+  actor           User?                    @relation("NotificationActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([recipientUserId, createdAt])
+  @@index([recipientUserId, readAt, createdAt])
+  @@index([type, createdAt])
+  @@index([resourceType, resourceId])
+  @@map("notifications")
 }
 
 model Customer {

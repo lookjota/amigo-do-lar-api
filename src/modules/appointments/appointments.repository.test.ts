@@ -35,6 +35,8 @@ const tx = {
     updateMany: mocks.txAppointmentUpdateMany,
   },
   serviceRequestEvent: { create: mocks.txEventCreate },
+  user: { findMany: vi.fn().mockResolvedValue([]) },
+  notification: { createMany: vi.fn().mockResolvedValue({ count: 0 }) },
 };
 
 beforeEach(() => {
