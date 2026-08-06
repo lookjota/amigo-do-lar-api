@@ -30,6 +30,7 @@ No módulo financeiro, a soma paga e a gravação compartilham uma transação
 serializável. A aprovação do orçamento e a sincronização válida da solicitação
 também são atômicas.
 O módulo de timeline usa as mesmas camadas. Eventos automáticos reutilizam uma função compatível com `Prisma.TransactionClient` nos repositories operacionais, garantindo a mesma transação sem acoplar services nem introduzir event bus.
+O centro de notificações segue o mesmo padrão: endpoints usam controller, service e repository; a geração automática usa um helper transacional explícito nos comandos operacionais. Timeline e notificações permanecem tabelas independentes.
 
 ## Responsabilidades
 

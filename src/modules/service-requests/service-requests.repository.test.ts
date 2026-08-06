@@ -4,6 +4,7 @@ const mocks = vi.hoisted(() => ({
   transaction: vi.fn(), findMany: vi.fn(), count: vi.fn(), findUnique: vi.fn(),
   txServiceFind: vi.fn(), txCustomerFind: vi.fn(), txCustomerCreate: vi.fn(),
   txDuplicateFind: vi.fn(), txRequestCreate: vi.fn(), txEventCreate: vi.fn(),
+  txUserFind: vi.fn(), txNotificationCreate: vi.fn(),
 }));
 
 vi.mock('../../shared/database/index.js', () => ({
@@ -20,6 +21,8 @@ const tx = {
   customer: { findUnique: mocks.txCustomerFind, create: mocks.txCustomerCreate },
   serviceRequest: { findFirst: mocks.txDuplicateFind, create: mocks.txRequestCreate },
   serviceRequestEvent: { create: mocks.txEventCreate },
+  user: { findMany: mocks.txUserFind },
+  notification: { createMany: mocks.txNotificationCreate },
 };
 
 beforeEach(() => {
@@ -31,6 +34,8 @@ beforeEach(() => {
   mocks.findMany.mockResolvedValue([]);
   mocks.count.mockResolvedValue(0);
   mocks.txEventCreate.mockResolvedValue({ id: 'event' });
+  mocks.txUserFind.mockResolvedValue([]);
+  mocks.txNotificationCreate.mockResolvedValue({ count: 0 });
 });
 
 describe('PrismaServiceRequestRepository', () => {
@@ -104,5 +109,25 @@ describe('PrismaServiceRequestRepository', () => {
       duplicateSince: new Date(),
     })).rejects.toThrow('timeline failed');
     expect(mocks.txRequestCreate).toHaveBeenCalledBefore(mocks.txEventCreate);
+  });
+
+  it('creates notifications atomically and propagates notification failure', async () => {
+    mocks.txServiceFind.mockResolvedValue({ id: 'service', isActive: true });
+    mocks.txCustomerFind.mockResolvedValue({ id: 'customer', name: 'João' });
+    mocks.txDuplicateFind.mockResolvedValue(null);
+    mocks.txRequestCreate.mockResolvedValue({ id: 'request' });
+    mocks.txUserFind.mockResolvedValue([{ id: 'admin' }, { id: 'operator' }]);
+    mocks.txNotificationCreate.mockRejectedValue(new Error('notification failed'));
+    await expect(new PrismaServiceRequestRepository().createPublic({
+      customer: { name: 'João', phone: '61999999999', email: null }, serviceId: 'service',
+      description: 'Descrição válida', preferredDate: null, address: 'Endereço', city: 'Brasília',
+      duplicateSince: new Date(),
+    })).rejects.toThrow('notification failed');
+    expect(mocks.txUserFind).toHaveBeenCalledWith({ where: { isActive: true, role: { in: ['ADMIN', 'OPERATOR'] } }, select: { id: true } });
+    const notificationCall = mocks.txNotificationCreate.mock.calls[0]?.[0] as { data: Array<{ recipientUserId: string; actorUserId: string | null; type: string }> };
+    expect(notificationCall.data).toEqual(expect.arrayContaining([
+      { recipientUserId: 'admin', actorUserId: null, type: 'SERVICE_REQUEST_CREATED', title: 'Nova solicitação recebida', message: 'Uma nova solicitação foi criada por João.', resourceType: 'SERVICE_REQUEST', resourceId: 'request' },
+      { recipientUserId: 'operator', actorUserId: null, type: 'SERVICE_REQUEST_CREATED', title: 'Nova solicitação recebida', message: 'Uma nova solicitação foi criada por João.', resourceType: 'SERVICE_REQUEST', resourceId: 'request' },
+    ]));
   });
 });

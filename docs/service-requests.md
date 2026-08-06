@@ -76,6 +76,7 @@ Todas exigem JWT com papel `ADMIN` ou `OPERATOR`:
 
 Não existe DELETE. Cancelamento é uma transição para `CANCELLED`.
 Criação e mudança de status inserem `REQUEST_CREATED` e `STATUS_CHANGED` na mesma transação. O histórico inicia após a migration e não é reconstruído retroativamente.
+Essas operações também geram notificações na mesma transação: criação pública para toda a equipe ativa e mudança de status para a equipe ativa exceto o ator.
 
 O PATCH operacional aceita somente `description`, `preferredDate`, `address`,
 `city` e `internalNotes`. Identificadores, relacionamentos, status e timestamps

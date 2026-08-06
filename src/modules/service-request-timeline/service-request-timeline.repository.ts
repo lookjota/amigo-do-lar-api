@@ -6,6 +6,7 @@ import type {
   ListTimelineInput,
   TimelineEvent,
 } from './service-request-timeline.types.js';
+import { createOperationalNotifications } from '../notifications/notifications.repository.js';
 
 const eventSelect = {
   id: true,
@@ -70,13 +71,18 @@ export class PrismaServiceRequestTimelineRepository implements ServiceRequestTim
     return database.$transaction(async (transaction) => {
       const request = await transaction.serviceRequest.findUnique({ where: { id: serviceRequestId }, select: { id: true } });
       if (request === null) return null;
-      return appendTimelineEvent(transaction, {
+      const event = await appendTimelineEvent(transaction, {
         serviceRequestId,
         actorUserId,
         type: 'COMMENT_ADDED',
         title: 'Comentário interno',
         description: content,
       });
+      await createOperationalNotifications(transaction, {
+        actorUserId, type: 'COMMENT_ADDED', message: 'Um comentário interno foi adicionado.',
+        resourceType: 'SERVICE_REQUEST', resourceId: serviceRequestId, roles: ['ADMIN', 'OPERATOR'],
+      });
+      return event;
     });
   }
 }

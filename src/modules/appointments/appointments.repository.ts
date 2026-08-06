@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { database } from '../../shared/database/index.js';
 import { appendTimelineEvent } from '../service-request-timeline/service-request-timeline.repository.js';
 import { EVENT_TITLES } from '../service-request-timeline/service-request-timeline.types.js';
+import { createOperationalNotifications } from '../notifications/notifications.repository.js';
 import { appointmentIntervalsOverlap } from './appointment-status.js';
 import type {
   AppointmentEntity,
@@ -86,6 +87,11 @@ export class PrismaAppointmentRepository implements AppointmentRepository {
           title: EVENT_TITLES.APPOINTMENT_CREATED,
           metadata: { appointmentId: appointment.id, scheduledAt: appointment.scheduledAt.toISOString() },
         });
+        await createOperationalNotifications(transaction, {
+          actorUserId, type: 'APPOINTMENT_CREATED', message: `Um agendamento foi criado para ${appointment.scheduledAt.toISOString()}.`,
+          resourceType: 'APPOINTMENT', resourceId: appointment.id,
+          metadata: { appointmentId: appointment.id, scheduledAt: appointment.scheduledAt.toISOString() }, roles: ['ADMIN', 'OPERATOR'],
+        });
         return { outcome: 'created', appointment };
       }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     } catch (error) {
@@ -159,6 +165,11 @@ export class PrismaAppointmentRepository implements AppointmentRepository {
               scheduledAtTo: input.scheduledAt.toISOString(),
             },
           });
+          await createOperationalNotifications(transaction, {
+            actorUserId, type: 'APPOINTMENT_RESCHEDULED', message: `O agendamento foi remarcado para ${input.scheduledAt.toISOString()}.`,
+            resourceType: 'APPOINTMENT', resourceId: id,
+            metadata: { appointmentId: id, scheduledAtFrom: existing.scheduledAt.toISOString(), scheduledAtTo: input.scheduledAt.toISOString() }, roles: ['ADMIN', 'OPERATOR'],
+          });
         }
         return { outcome: 'updated', appointment };
       }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
@@ -206,6 +217,11 @@ export class PrismaAppointmentRepository implements AppointmentRepository {
         type: 'APPOINTMENT_STATUS_CHANGED',
         title: EVENT_TITLES.APPOINTMENT_STATUS_CHANGED,
         metadata: { appointmentId: id, from: expectedStatus, to: input.status },
+      });
+      await createOperationalNotifications(transaction, {
+        actorUserId, type: 'APPOINTMENT_STATUS_CHANGED', message: `O agendamento mudou de ${expectedStatus} para ${input.status}.`,
+        resourceType: 'APPOINTMENT', resourceId: id,
+        metadata: { appointmentId: id, from: expectedStatus, to: input.status }, roles: ['ADMIN', 'OPERATOR'],
       });
       return { outcome: 'updated', appointment };
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });

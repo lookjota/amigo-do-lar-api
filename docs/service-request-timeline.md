@@ -25,4 +25,4 @@ A criação pública registra `REQUEST_CREATED` com autor nulo. Mudanças autent
 
 ## Implantação e limitações
 
-A timeline começa após esta migration. Registros anteriores não recebem eventos retroativos e o seed não cria histórico falso. Um backfill futuro será separado. Uploads, anexos, fotos, notificações, WebSocket, auditoria global e visibilidade pública estão fora deste escopo.
+A timeline começa após sua migration. Registros anteriores não recebem eventos retroativos e o seed não cria histórico falso. Um backfill futuro será separado. A timeline continua independente do centro de notificações: ela é o histórico da solicitação, enquanto notificações formam caixas de entrada individuais. Uploads, anexos, fotos, WebSocket, auditoria global e visibilidade pública permanecem fora deste escopo.

@@ -83,6 +83,14 @@ Status: concluído na branch `feature/service-request-timeline`.
 - Persistência atômica com solicitações, agendamentos e financeiro.
 - Sem backfill, anexos, notificações, WebSocket ou auditoria global nesta etapa.
 
+### Centro interno de notificações
+
+Status: concluído na branch `feature/notifications-module`.
+
+- Caixa de entrada persistente e isolada por usuário, com filtros, paginação e leitura.
+- Geração atômica nos eventos operacionais, sem backfill ou exclusão automática.
+- SSE/WebSocket, e-mail, WhatsApp, preferências e política de retenção permanecem futuros.
+
 Entrega parcial: módulo administrativo de usuários concluído, com RBAC exclusivo
 para `ADMIN`, projeções públicas, redefinição segura de senha e proteção
 transacional do último administrador ativo. Revogação global de sessões permanece

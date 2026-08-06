@@ -8,6 +8,7 @@ import type {
   QuoteEntity, QuoteStatusResult, QuoteWriteData, UpdateQuoteResult,
 } from './finance.types.js';
 import { canTransitionServiceRequestStatus } from '../service-requests/service-request-status.js';
+import { createOperationalNotifications } from '../notifications/notifications.repository.js';
 
 const quoteRelations = {
   serviceRequest: { select: {
@@ -73,6 +74,10 @@ export class PrismaFinanceRepository implements FinanceRepository {
           type: 'QUOTE_CREATED',
           title: EVENT_TITLES.QUOTE_CREATED,
           metadata: { quoteId: quote.id },
+        });
+        await createOperationalNotifications(tx, {
+          actorUserId, type: 'QUOTE_CREATED', message: 'Um novo orçamento foi criado.',
+          resourceType: 'QUOTE', resourceId: quote.id, metadata: { quoteId: quote.id }, roles: ['ADMIN'],
         });
         return { outcome: 'created', quote };
       });
@@ -143,6 +148,10 @@ export class PrismaFinanceRepository implements FinanceRepository {
         title: EVENT_TITLES.QUOTE_STATUS_CHANGED,
         metadata: { quoteId: id, from: expected, to: next },
       });
+      await createOperationalNotifications(tx, {
+        actorUserId, type: 'QUOTE_STATUS_CHANGED', message: `O orçamento mudou de ${expected} para ${next}.`,
+        resourceType: 'QUOTE', resourceId: id, metadata: { quoteId: id, from: expected, to: next }, roles: ['ADMIN'],
+      });
       return { outcome: 'updated', quote };
       });
     } catch (error) {
@@ -181,6 +190,10 @@ export class PrismaFinanceRepository implements FinanceRepository {
           title: EVENT_TITLES.PAYMENT_CREATED,
           metadata: { paymentId: payment.id, quoteId },
         });
+        await createOperationalNotifications(tx, {
+          actorUserId, type: 'PAYMENT_CREATED', message: 'Um pagamento foi registrado para o orçamento.',
+          resourceType: 'PAYMENT', resourceId: payment.id, metadata: { paymentId: payment.id, quoteId }, roles: ['ADMIN'],
+        });
         return { outcome: 'created', payment };
       });
     } catch (error) {
@@ -212,6 +225,11 @@ export class PrismaFinanceRepository implements FinanceRepository {
           type: 'PAYMENT_STATUS_CHANGED',
           title: EVENT_TITLES.PAYMENT_STATUS_CHANGED,
           metadata: { paymentId: id, quoteId: payment.quoteId, from: expected, to: next },
+        });
+        await createOperationalNotifications(tx, {
+          actorUserId, type: 'PAYMENT_STATUS_CHANGED', message: `O pagamento mudou de ${expected} para ${next}.`,
+          resourceType: 'PAYMENT', resourceId: id,
+          metadata: { paymentId: id, quoteId: payment.quoteId, from: expected, to: next }, roles: ['ADMIN'],
         });
         return { outcome: 'updated', payment: updatedPayment };
       });
