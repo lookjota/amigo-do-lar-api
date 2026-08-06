@@ -34,6 +34,8 @@ O centro de notificações segue o mesmo padrão: endpoints usam controller, ser
 Anexos adicionam a fronteira `AttachmentStorage`, injetada no service. O adapter
 S3 não alcança controllers nem Prisma; o repository confirma metadados, timeline
 e notificações em uma transação, e o service compensa o objeto se ela falhar.
+Quando o driver de anexos está `disabled`, o bootstrap não cria adapter nem
+repository e não registra multipart ou rotas do módulo.
 
 ## Responsabilidades
 

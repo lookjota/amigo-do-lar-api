@@ -6,6 +6,20 @@ afterEach(() => {
 });
 
 describe('environment configuration', () => {
+  function configureAttachmentEnvironment(
+    nodeEnv: 'test' | 'production',
+    driver: 's3' | 'fake' | 'disabled' | undefined,
+  ): void {
+    vi.stubEnv('NODE_ENV', nodeEnv);
+    vi.stubEnv('DATABASE_URL', 'postgresql://user:password@localhost:5432/app');
+    vi.stubEnv('ATTACHMENT_STORAGE_DRIVER', driver);
+    vi.stubEnv('S3_ENDPOINT', undefined);
+    vi.stubEnv('S3_REGION', undefined);
+    vi.stubEnv('S3_BUCKET', undefined);
+    vi.stubEnv('S3_ACCESS_KEY_ID', undefined);
+    vi.stubEnv('S3_SECRET_ACCESS_KEY', undefined);
+  }
+
   it('uses the local server defaults when host and port are not defined', async () => {
     vi.stubEnv('HOST', undefined);
     vi.stubEnv('PORT', undefined);
@@ -54,4 +68,61 @@ describe('environment configuration', () => {
       );
     },
   );
+
+  it('defaults to disabled and starts in production without S3 configuration', async () => {
+    configureAttachmentEnvironment('production', undefined);
+
+    const { env } = await import('./env.js');
+
+    expect(env.ATTACHMENT_STORAGE_DRIVER).toBe('disabled');
+  });
+
+  it('allows an explicitly disabled driver in production without S3 configuration', async () => {
+    configureAttachmentEnvironment('production', 'disabled');
+
+    const { env } = await import('./env.js');
+
+    expect(env.ATTACHMENT_STORAGE_DRIVER).toBe('disabled');
+  });
+
+  it('rejects S3 in production when its configuration is incomplete', async () => {
+    configureAttachmentEnvironment('production', 's3');
+
+    await expect(import('./env.js')).rejects.toThrow(
+      'S3_ENDPOINT is required for S3 attachment storage',
+    );
+  });
+
+  it('allows fake attachment storage in tests', async () => {
+    configureAttachmentEnvironment('test', 'fake');
+
+    const { env } = await import('./env.js');
+
+    expect(env.ATTACHMENT_STORAGE_DRIVER).toBe('fake');
+  });
+
+  it('rejects fake attachment storage in production', async () => {
+    configureAttachmentEnvironment('production', 'fake');
+
+    await expect(import('./env.js')).rejects.toThrow(
+      'Fake attachment storage is allowed only in tests',
+    );
+  });
+
+  it('allows S3 when its complete configuration is provided', async () => {
+    configureAttachmentEnvironment('production', 's3');
+    vi.stubEnv('S3_ENDPOINT', 'https://storage.example.com');
+    vi.stubEnv('S3_REGION', 'us-east-1');
+    vi.stubEnv('S3_BUCKET', 'attachments');
+    vi.stubEnv('S3_ACCESS_KEY_ID', 'access-key');
+    vi.stubEnv('S3_SECRET_ACCESS_KEY', 'secret-key');
+
+    const { env } = await import('./env.js');
+
+    expect(env).toMatchObject({
+      ATTACHMENT_STORAGE_DRIVER: 's3',
+      S3_ENDPOINT: 'https://storage.example.com',
+      S3_BUCKET: 'attachments',
+    });
+  });
 });

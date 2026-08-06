@@ -3,6 +3,8 @@
 O módulo mantém metadados no PostgreSQL e objetos em storage S3-compatible. Não há
 binário no banco nem persistência no filesystem do container. AWS S3, Cloudflare
 R2 e MinIO podem ser usados por meio de endpoint, região, bucket e credenciais.
+Por padrão o módulo fica desativado e suas rotas não são registradas; nesse
+estado elas recebem o `404 RESOURCE_NOT_FOUND` padronizado da aplicação.
 
 ## Contrato e acesso
 
@@ -32,7 +34,7 @@ limitado a 255 caracteres; caption é texto de até 500 caracteres.
 do cliente ou retornada nos contratos públicos. Configure:
 
 ```text
-ATTACHMENT_STORAGE_DRIVER=s3
+ATTACHMENT_STORAGE_DRIVER=disabled
 S3_ENDPOINT=https://...
 S3_REGION=...
 S3_BUCKET=...
@@ -42,10 +44,11 @@ S3_FORCE_PATH_STYLE=false
 ATTACHMENT_MAX_FILE_SIZE_BYTES=10485760
 ```
 
-Fora de testes, credenciais S3 são obrigatórias e o driver fake é rejeitado. Em
-testes, o fake injetável não faz chamadas externas. Para MinIO local, use endpoint
-local e `S3_FORCE_PATH_STYLE=true`; bucket e credenciais devem ser provisionados
-fora da aplicação.
+Para ativar anexos, altere o driver para `s3` e configure endpoint, região,
+bucket, access key e secret key. Essas variáveis são obrigatórias somente com o
+driver `s3`. O driver `fake` é aceito apenas em testes e não faz chamadas
+externas. Para MinIO local, use endpoint local e `S3_FORCE_PATH_STYLE=true`;
+bucket e credenciais devem ser provisionados fora da aplicação.
 
 O upload ocorre antes da transação. Metadados, timeline e notificações são
 confirmados juntos; se a transação falhar, o objeto recém-enviado é removido por

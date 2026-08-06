@@ -94,8 +94,8 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     financeRepository = new PrismaFinanceRepository(),
     userRepository = new PrismaUserRepository(),
     notificationRepository = new PrismaNotificationRepository(),
-    attachmentRepository = new PrismaAttachmentRepository(),
-    attachmentStorage = createAttachmentStorage(),
+    attachmentRepository,
+    attachmentStorage,
     databaseReadinessCheck = checkDatabaseReadiness,
     ...serverOptions
   } = options;
@@ -120,7 +120,20 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
-  app.register(multipart, { limits: { fileSize: env.ATTACHMENT_MAX_FILE_SIZE_BYTES, files: 1, fields: 2, parts: 3 } });
+  const attachmentsEnabled =
+    attachmentStorage !== undefined ||
+    env.ATTACHMENT_STORAGE_DRIVER !== 'disabled';
+
+  if (attachmentsEnabled) {
+    app.register(multipart, {
+      limits: {
+        fileSize: env.ATTACHMENT_MAX_FILE_SIZE_BYTES,
+        files: 1,
+        fields: 2,
+        parts: 3,
+      },
+    });
+  }
   registerJwt(app);
   registerDatabaseLifecycle(app);
   registerErrorHandlers(app);
@@ -134,7 +147,14 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   registerFinanceRoutes(app, financeRepository);
   registerUsersRoutes(app, userRepository);
   registerNotificationsRoutes(app, notificationRepository);
-  registerServiceRequestAttachmentsRoutes(app, attachmentRepository, attachmentStorage, env.ATTACHMENT_MAX_FILE_SIZE_BYTES);
+  if (attachmentsEnabled) {
+    registerServiceRequestAttachmentsRoutes(
+      app,
+      attachmentRepository ?? new PrismaAttachmentRepository(),
+      attachmentStorage ?? createAttachmentStorage(),
+      env.ATTACHMENT_MAX_FILE_SIZE_BYTES,
+    );
+  }
 
   app.get('/health', () => {
     return {
@@ -160,9 +180,38 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
 }
 
 function createAttachmentStorage(): AttachmentStorage {
-  if (env.NODE_ENV === 'test' || env.ATTACHMENT_STORAGE_DRIVER === 'fake') return new FakeAttachmentStorage();
+  if (env.ATTACHMENT_STORAGE_DRIVER === 'fake') {
+    return new FakeAttachmentStorage();
+  }
+
+  if (env.ATTACHMENT_STORAGE_DRIVER !== 's3') {
+    throw new Error('Attachment storage is disabled');
+  }
+
+  const {
+    S3_ENDPOINT: endpoint,
+    S3_REGION: region,
+    S3_BUCKET: bucket,
+    S3_ACCESS_KEY_ID: accessKeyId,
+    S3_SECRET_ACCESS_KEY: secretAccessKey,
+  } = env;
+
+  if (
+    endpoint === undefined ||
+    region === undefined ||
+    bucket === undefined ||
+    accessKeyId === undefined ||
+    secretAccessKey === undefined
+  ) {
+    throw new Error('S3 attachment storage configuration is incomplete');
+  }
+
   return new S3AttachmentStorage({
-    endpoint: env.S3_ENDPOINT!, region: env.S3_REGION!, bucket: env.S3_BUCKET!,
-    accessKeyId: env.S3_ACCESS_KEY_ID!, secretAccessKey: env.S3_SECRET_ACCESS_KEY!, forcePathStyle: env.S3_FORCE_PATH_STYLE,
+    endpoint,
+    region,
+    bucket,
+    accessKeyId,
+    secretAccessKey,
+    forcePathStyle: env.S3_FORCE_PATH_STYLE,
   });
 }
