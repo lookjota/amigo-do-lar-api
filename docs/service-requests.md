@@ -169,3 +169,7 @@ Uma solicitação aceita anexos privados inclusive em estados terminais, pois el
 compõem o histórico operacional. Consulte
 [service-request-attachments.md](service-request-attachments.md) para endpoints,
 categorias, RBAC e segurança.
+
+# Activity Feed
+
+A visão cronológica unificada está disponível em `GET /service-requests/:id/activity` para `ADMIN` e `OPERATOR`. Ela projeta a timeline sem duplicar anexos ou entidades operacionais. Consulte [service-request-activity.md](service-request-activity.md).

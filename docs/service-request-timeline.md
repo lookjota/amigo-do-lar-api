@@ -6,7 +6,7 @@ A timeline é o histórico operacional interno de uma `ServiceRequest`. Cada eve
 
 `ServiceRequest 1 — N ServiceRequestEvent` e `User 0..1 — N ServiceRequestEvent`. O autor usa `SET NULL` quando um usuário for removido, preservando o histórico; a solicitação usa `RESTRICT`. A visibilidade atualmente aceita apenas `INTERNAL`. Não existe rota pública ou de cliente para estes dados.
 
-Tipos: `REQUEST_CREATED`, `STATUS_CHANGED`, `COMMENT_ADDED`, `APPOINTMENT_CREATED`, `APPOINTMENT_RESCHEDULED`, `APPOINTMENT_STATUS_CHANGED`, `QUOTE_CREATED`, `QUOTE_STATUS_CHANGED`, `PAYMENT_CREATED` e `PAYMENT_STATUS_CHANGED`.
+Tipos: `REQUEST_CREATED`, `STATUS_CHANGED`, `COMMENT_ADDED`, `APPOINTMENT_CREATED`, `APPOINTMENT_RESCHEDULED`, `APPOINTMENT_STATUS_CHANGED`, `QUOTE_CREATED`, `QUOTE_STATUS_CHANGED`, `PAYMENT_CREATED`, `PAYMENT_STATUS_CHANGED`, `ATTACHMENT_ADDED` e `ATTACHMENT_REMOVED`.
 
 Metadata é construída explicitamente e contém somente identificadores, estados e datas necessários. Não contém valores financeiros, payloads HTTP, senhas, hashes, JWT, dados de cartão, CVV, segredos ou detalhes do Prisma.
 
@@ -31,3 +31,7 @@ A timeline começa após sua migration. Registros anteriores não recebem evento
 `ATTACHMENT_ADDED` registra `attachmentId`, `category` e `mimeType`.
 `ATTACHMENT_REMOVED` registra `attachmentId` e `category`. Nenhum evento contém
 key, URL, checksum, conteúdo ou dados pessoais do cliente.
+
+## Projeção unificada
+
+O [Activity Feed](service-request-activity.md) usa estes eventos como fonte principal e remove o metadata bruto do contrato. Ele não altera a timeline existente nem concatena tabelas relacionadas.

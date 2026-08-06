@@ -114,3 +114,7 @@ e notificações em uma transação, e o service compensa o objeto se ela falhar
   concreta de substituição.
 - Ausência de abstrações especulativas e de funcionalidades fora do escopo.
 - Mudanças pequenas, rastreáveis e restritas aos arquivos relacionados à tarefa.
+
+## Projeção de Activity Feed
+
+`service-request-activity` é um módulo somente de leitura: controller e schemas definem o contrato HTTP, o service valida existência/cursor e mapeia a página, e o repository consulta `ServiceRequestEvent`. Não existe persistência própria. Filtros e paginação são executados no banco; referências presentes no metadata evitam consultas por item e duplicação das tabelas operacionais.

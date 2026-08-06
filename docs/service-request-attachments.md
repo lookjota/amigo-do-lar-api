@@ -57,3 +57,5 @@ Uploads e remoções geram `ATTACHMENT_ADDED`/`ATTACHMENT_REMOVED` na timeline e
 nas notificações. Recebem notificações usuários ativos `ADMIN`/`OPERATOR`, exceto
 o ator. Metadata contém somente IDs, categoria e, na timeline de upload, MIME;
 não contém arquivo, key, URL ou dados do cliente.
+
+O Activity Feed representa upload e remoção exclusivamente pelos eventos da timeline. Anexos ativos não são acrescentados como uma segunda atividade, e anexos removidos permanecem no histórico com apenas ID e categoria. Consulte [service-request-activity.md](service-request-activity.md).

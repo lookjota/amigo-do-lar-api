@@ -103,6 +103,14 @@ planejada.
 
 ## M9 Tests and Documentation
 
+### Activity Feed de solicitações
+
+Status: concluído na branch `feature/service-request-activity-feed`.
+
+- Projeção somente de leitura sobre a timeline, com DTO sanitizado e cursor estável.
+- Filtros por evento/categoria, RBAC de equipe e ausência de tabela ou mutações próprias.
+- Busca textual, backfill e enriquecimentos de novos recursos permanecem futuros.
+
 ### Anexos de solicitações
 
 Status: concluído na branch `feature/service-request-attachments`.

@@ -56,3 +56,5 @@ Na mesma transação, esses eventos notificam somente usuários `ADMIN` ativos e
 ## Limitações
 
 Não há PDF, relatório avançado, conciliação, contabilidade, integração bancária, PIX automático, processamento de cartão ou gateway. Confirmação, cancelamento e reembolso são registros manuais.
+
+O [Activity Feed](service-request-activity.md) projeta eventos de orçamento e pagamento usando somente IDs e transições de estado. Valores, método, referência, notas e demais dados financeiros não são copiados para o feed.

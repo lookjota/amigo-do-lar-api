@@ -270,6 +270,10 @@ A referência completa está em [docs/finance.md](docs/finance.md).
 
 Solicitações mantêm uma timeline interna, imutável e paginada com eventos automáticos e comentários de `ADMIN` e `OPERATOR`. A ação principal e seu evento são atômicos. Consulte [docs/service-request-timeline.md](docs/service-request-timeline.md).
 
+## Activity Feed
+
+`GET /service-requests/:id/activity` projeta os eventos da timeline em um DTO unificado, sanitizado e paginado por cursor, sem tabela ou eventos duplicados. Consulte [docs/service-request-activity.md](docs/service-request-activity.md).
+
 ## Status
 
 Os marcos de fundação HTTP, banco de dados, autenticação administrativa,

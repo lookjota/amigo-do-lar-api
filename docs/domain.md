@@ -144,3 +144,7 @@ O orçamento segue `DRAFT -> SENT -> APPROVED | REJECTED | CANCELLED`, também
 permitindo `DRAFT -> CANCELLED`. Um aprovado só é cancelado sem pagamento pago.
 O pagamento segue `PENDING -> PAID | CANCELLED` e `PAID -> REFUNDED`. Consulte
 [finance.md](finance.md).
+
+## Activity Feed
+
+O feed operacional não é uma nova entidade de domínio. Ele projeta `ServiceRequestEvent` em categorias estáveis e referencia a solicitação, o agendamento, orçamento, pagamento ou anexo relacionado. Consulte [service-request-activity.md](service-request-activity.md).
