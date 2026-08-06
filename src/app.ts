@@ -3,6 +3,7 @@ import fastify, {
   type FastifyServerOptions,
 } from 'fastify';
 import cors from '@fastify/cors';
+import multipart from '@fastify/multipart';
 
 import { env } from './config/env.js';
 import {
@@ -47,6 +48,11 @@ import {
 import { registerUsersRoutes } from './modules/users/users.routes.js';
 import { PrismaNotificationRepository, type NotificationRepository } from './modules/notifications/notifications.repository.js';
 import { registerNotificationsRoutes } from './modules/notifications/notifications.routes.js';
+import type { AttachmentStorage } from './modules/service-request-attachments/attachment-storage.js';
+import { FakeAttachmentStorage } from './modules/service-request-attachments/fake-attachment-storage.js';
+import { PrismaAttachmentRepository, type AttachmentRepository } from './modules/service-request-attachments/service-request-attachments.repository.js';
+import { registerServiceRequestAttachmentsRoutes } from './modules/service-request-attachments/service-request-attachments.routes.js';
+import { S3AttachmentStorage } from './modules/service-request-attachments/s3-attachment-storage.js';
 import { registerJwt } from './shared/auth/jwt.js';
 import {
   checkDatabaseReadiness,
@@ -65,6 +71,8 @@ interface BuildAppOptions extends FastifyServerOptions {
   financeRepository?: FinanceRepository;
   userRepository?: UserRepository;
   notificationRepository?: NotificationRepository;
+  attachmentRepository?: AttachmentRepository;
+  attachmentStorage?: AttachmentStorage;
   databaseReadinessCheck?: DatabaseReadinessCheck;
 }
 
@@ -79,6 +87,8 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     financeRepository = new PrismaFinanceRepository(),
     userRepository = new PrismaUserRepository(),
     notificationRepository = new PrismaNotificationRepository(),
+    attachmentRepository = new PrismaAttachmentRepository(),
+    attachmentStorage = createAttachmentStorage(),
     databaseReadinessCheck = checkDatabaseReadiness,
     ...serverOptions
   } = options;
@@ -103,6 +113,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
+  app.register(multipart, { limits: { fileSize: env.ATTACHMENT_MAX_FILE_SIZE_BYTES, files: 1, fields: 2, parts: 3 } });
   registerJwt(app);
   registerDatabaseLifecycle(app);
   registerErrorHandlers(app);
@@ -115,6 +126,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   registerFinanceRoutes(app, financeRepository);
   registerUsersRoutes(app, userRepository);
   registerNotificationsRoutes(app, notificationRepository);
+  registerServiceRequestAttachmentsRoutes(app, attachmentRepository, attachmentStorage, env.ATTACHMENT_MAX_FILE_SIZE_BYTES);
 
   app.get('/health', () => {
     return {
@@ -137,4 +149,12 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   });
 
   return app;
+}
+
+function createAttachmentStorage(): AttachmentStorage {
+  if (env.NODE_ENV === 'test' || env.ATTACHMENT_STORAGE_DRIVER === 'fake') return new FakeAttachmentStorage();
+  return new S3AttachmentStorage({
+    endpoint: env.S3_ENDPOINT!, region: env.S3_REGION!, bucket: env.S3_BUCKET!,
+    accessKeyId: env.S3_ACCESS_KEY_ID!, secretAccessKey: env.S3_SECRET_ACCESS_KEY!, forcePathStyle: env.S3_FORCE_PATH_STYLE,
+  });
 }

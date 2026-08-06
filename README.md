@@ -3,6 +3,8 @@
 API REST da plataforma Amigo do Lar, responsável por organizar clientes, serviços,
 áreas de atendimento, solicitações, agendamentos e finanças operacionais.
 O backend também oferece um centro interno e persistente de notificações para usuários administrativos; consulte [docs/notifications.md](docs/notifications.md).
+Solicitações aceitam fotos e documentos privados em storage S3-compatible;
+consulte [docs/service-request-attachments.md](docs/service-request-attachments.md).
 
 ## Objetivo
 

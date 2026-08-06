@@ -31,6 +31,9 @@ serializável. A aprovação do orçamento e a sincronização válida da solici
 também são atômicas.
 O módulo de timeline usa as mesmas camadas. Eventos automáticos reutilizam uma função compatível com `Prisma.TransactionClient` nos repositories operacionais, garantindo a mesma transação sem acoplar services nem introduzir event bus.
 O centro de notificações segue o mesmo padrão: endpoints usam controller, service e repository; a geração automática usa um helper transacional explícito nos comandos operacionais. Timeline e notificações permanecem tabelas independentes.
+Anexos adicionam a fronteira `AttachmentStorage`, injetada no service. O adapter
+S3 não alcança controllers nem Prisma; o repository confirma metadados, timeline
+e notificações em uma transação, e o service compensa o objeto se ela falhar.
 
 ## Responsabilidades
 

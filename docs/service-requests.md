@@ -163,3 +163,9 @@ incompatíveis são definidos como `null` em toda transição válida.
 - motivo estruturado de cancelamento;
 - integração com Service Areas e validação de CEP;
 - anexos, fotos, notificações e auditoria global.
+# Anexos
+
+Uma solicitação aceita anexos privados inclusive em estados terminais, pois eles
+compõem o histórico operacional. Consulte
+[service-request-attachments.md](service-request-attachments.md) para endpoints,
+categorias, RBAC e segurança.

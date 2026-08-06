@@ -103,6 +103,14 @@ planejada.
 
 ## M9 Tests and Documentation
 
+### Anexos de solicitações
+
+Status: concluído na branch `feature/service-request-attachments`.
+
+- Upload privado, classificação, consulta, download assinado e soft delete.
+- Storage S3-compatible com compensação, timeline e notificações atômicas.
+- Retenção/limpeza física, antivírus, OCR, edição e galeria pública permanecem futuros.
+
 - Ampliar testes unitários e de integração.
 - Validar contratos HTTP e cenários críticos.
 - Consolidar documentação OpenAPI e guias operacionais.

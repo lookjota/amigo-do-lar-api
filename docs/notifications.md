@@ -27,3 +27,8 @@ Consultas e alterações combinam `recipientUserId` e `id`. Um id inexistente ou
 Operação principal, timeline e notificações usam o mesmo `Prisma.TransactionClient`; uma falha de persistência reverte o comando. Metadata é construída campo a campo e contém apenas ids, estados e datas. Descrições, comentários, observações, referências de pagamento, dados bancários, cartão, credenciais, JWT, payloads e detalhes internos não são copiados.
 
 Notificações começam após a implantação desta migration. A timeline anterior não será convertida e não há backfill nesta sprint. O histórico não tem limpeza automática; uma política de retenção poderá ser definida futuramente. A persistência e os tipos permitem adicionar, em trabalhos separados, SSE/WebSocket, e-mail e WhatsApp, sem que esses canais existam agora.
+# Notificações de anexos
+
+`ATTACHMENT_ADDED` e `ATTACHMENT_REMOVED` são enviados a administradores e
+operadores ativos, exceto o ator, usando `SERVICE_REQUEST` como resource type.
+Mensagens não incluem nome de arquivo, URL ou conteúdo.
