@@ -130,3 +130,5 @@ curl -X PATCH http://localhost:3000/appointments/11111111-1111-4111-8111-1111111
 Evoluções futuras incluem associação a técnicos/prestadores, proteção de
 concorrência por constraint específica de agenda, auditoria, motivo estruturado
 de cancelamento e notificações.
+
+Criação, reagendamento e mudança de status também aparecem no [Activity Feed](service-request-activity.md) pela referência já gravada na timeline; a tabela de agendamentos não gera itens paralelos.

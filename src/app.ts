@@ -42,6 +42,11 @@ import {
 } from './modules/service-request-timeline/service-request-timeline.repository.js';
 import { registerServiceRequestTimelineRoutes } from './modules/service-request-timeline/service-request-timeline.routes.js';
 import {
+  PrismaServiceRequestActivityRepository,
+  type ServiceRequestActivityRepository,
+} from './modules/service-request-activity/service-request-activity.repository.js';
+import { registerServiceRequestActivityRoutes } from './modules/service-request-activity/service-request-activity.routes.js';
+import {
   PrismaUserRepository,
   type UserRepository,
 } from './modules/users/users.repository.js';
@@ -67,6 +72,7 @@ interface BuildAppOptions extends FastifyServerOptions {
   serviceRepository?: ServiceRepository;
   serviceRequestRepository?: ServiceRequestRepository;
   serviceRequestTimelineRepository?: ServiceRequestTimelineRepository;
+  serviceRequestActivityRepository?: ServiceRequestActivityRepository;
   appointmentRepository?: AppointmentRepository;
   financeRepository?: FinanceRepository;
   userRepository?: UserRepository;
@@ -83,6 +89,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
     serviceRepository = new PrismaServiceRepository(),
     serviceRequestRepository = new PrismaServiceRequestRepository(),
     serviceRequestTimelineRepository = new PrismaServiceRequestTimelineRepository(),
+    serviceRequestActivityRepository = new PrismaServiceRequestActivityRepository(),
     appointmentRepository = new PrismaAppointmentRepository(),
     financeRepository = new PrismaFinanceRepository(),
     userRepository = new PrismaUserRepository(),
@@ -122,6 +129,7 @@ export function buildApp(options: BuildAppOptions = {}): FastifyInstance {
   registerCustomersRoutes(app, customerRepository);
   registerServiceRequestsRoutes(app, serviceRequestRepository);
   registerServiceRequestTimelineRoutes(app, serviceRequestTimelineRepository);
+  registerServiceRequestActivityRoutes(app, serviceRequestActivityRepository);
   registerAppointmentsRoutes(app, appointmentRepository);
   registerFinanceRoutes(app, financeRepository);
   registerUsersRoutes(app, userRepository);
