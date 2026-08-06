@@ -15,6 +15,8 @@ export const EVENT_TITLES = {
   QUOTE_STATUS_CHANGED: 'Status do orçamento alterado',
   PAYMENT_CREATED: 'Pagamento registrado',
   PAYMENT_STATUS_CHANGED: 'Status do pagamento alterado',
+  ATTACHMENT_ADDED: 'Anexo adicionado',
+  ATTACHMENT_REMOVED: 'Anexo removido',
 } satisfies Record<ServiceRequestEventType, string>;
 
 export interface TimelineActor {

@@ -61,6 +61,12 @@ Representa um fato imutável da timeline interna de uma solicitação. Pode apon
 
 Representa um aviso persistente pertencente a um usuário administrativo. O destinatário é obrigatório, o ator pode ser nulo, e tipo mais `resourceType`/`resourceId` orientam semântica e navegação sem URL persistida. Somente `readAt` é alterado; notificações não são editadas nem excluídas.
 
+### ServiceRequestAttachment
+
+Representa os metadados de uma foto ou documento privado associado a uma
+solicitação. Preserva uploader e eventual responsável pela remoção lógica. O
+conteúdo vive em storage S3-compatible e nunca no PostgreSQL.
+
 ### ServiceArea
 
 Representa uma região geográfica em que um ou mais serviços podem ser oferecidos.
@@ -80,6 +86,8 @@ definido a partir dos requisitos operacionais.
 - Um `Quote` possui zero ou vários `Payment`.
 - Uma `ServiceRequest` possui vários `ServiceRequestEvent`; um `User` pode ser autor de vários eventos.
 - Um `User` recebe várias `Notification` e pode ser ator opcional de várias notificações.
+- Uma `ServiceRequest` possui vários anexos; um `User` envia vários anexos e pode
+  ser responsável pela remoção lógica de vários deles.
 - Um `Service` pode estar disponível em várias `ServiceArea`.
 - Uma `ServiceArea` pode oferecer vários `Service`.
 - Um `User` pode estar associado a um `Customer`, sujeito às regras futuras de

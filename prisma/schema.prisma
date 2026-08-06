@@ -66,6 +66,8 @@ enum ServiceRequestEventType {
   QUOTE_STATUS_CHANGED
   PAYMENT_CREATED
   PAYMENT_STATUS_CHANGED
+  ATTACHMENT_ADDED
+  ATTACHMENT_REMOVED
 }
 
 enum ServiceRequestEventVisibility {
@@ -83,6 +85,16 @@ enum NotificationType {
   QUOTE_STATUS_CHANGED
   PAYMENT_CREATED
   PAYMENT_STATUS_CHANGED
+  ATTACHMENT_ADDED
+  ATTACHMENT_REMOVED
+}
+
+enum AttachmentCategory {
+  BEFORE_SERVICE
+  AFTER_SERVICE
+  RECEIPT
+  DOCUMENT
+  OTHER
 }
 
 enum NotificationResourceType {
@@ -104,6 +116,8 @@ model User {
   serviceRequestEvents ServiceRequestEvent[]
   receivedNotifications Notification[] @relation("NotificationRecipient")
   actedNotifications    Notification[] @relation("NotificationActor")
+  uploadedAttachments ServiceRequestAttachment[] @relation("AttachmentUploader")
+  deletedAttachments  ServiceRequestAttachment[] @relation("AttachmentDeleter")
 
   @@index([isActive])
   @@map("users")
@@ -180,6 +194,7 @@ model ServiceRequest {
   appointments  Appointment[]
   quote         Quote?
   events        ServiceRequestEvent[]
+  attachments   ServiceRequestAttachment[]
   createdAt     DateTime             @default(now()) @map("created_at")
   updatedAt     DateTime             @updatedAt @map("updated_at")
 
@@ -190,6 +205,32 @@ model ServiceRequest {
   @@index([createdAt])
   @@index([status, createdAt])
   @@map("service_requests")
+}
+
+model ServiceRequestAttachment {
+  id                String             @id @default(uuid()) @db.Uuid
+  serviceRequestId  String             @map("service_request_id") @db.Uuid
+  uploadedByUserId  String             @map("uploaded_by_user_id") @db.Uuid
+  category          AttachmentCategory
+  originalName      String             @map("original_name")
+  storageKey        String             @unique @map("storage_key")
+  mimeType          String             @map("mime_type")
+  sizeBytes         Int                @map("size_bytes")
+  checksum          String?
+  caption           String?
+  isDeleted         Boolean            @default(false) @map("is_deleted")
+  deletedAt         DateTime?          @map("deleted_at")
+  deletedByUserId   String?            @map("deleted_by_user_id") @db.Uuid
+  createdAt         DateTime           @default(now()) @map("created_at")
+  serviceRequest    ServiceRequest     @relation(fields: [serviceRequestId], references: [id], onDelete: Restrict)
+  uploadedBy        User               @relation("AttachmentUploader", fields: [uploadedByUserId], references: [id], onDelete: Restrict)
+  deletedBy         User?              @relation("AttachmentDeleter", fields: [deletedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([serviceRequestId, createdAt])
+  @@index([serviceRequestId, category, createdAt])
+  @@index([uploadedByUserId])
+  @@index([isDeleted, createdAt])
+  @@map("service_request_attachments")
 }
 
 model ServiceRequestEvent {

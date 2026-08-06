@@ -14,6 +14,8 @@ export const NOTIFICATION_TITLES = {
   QUOTE_STATUS_CHANGED: 'Status do orçamento alterado',
   PAYMENT_CREATED: 'Novo pagamento registrado',
   PAYMENT_STATUS_CHANGED: 'Status do pagamento alterado',
+  ATTACHMENT_ADDED: 'Novo anexo adicionado',
+  ATTACHMENT_REMOVED: 'Anexo removido',
 } satisfies Record<NotificationType, string>;
 
 export interface NotificationActor { id: string; name: string; email: string; role: UserRole }
